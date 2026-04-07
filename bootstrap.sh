@@ -7,7 +7,7 @@
 #   1. Validates prerequisites (Docker Compose V2, config files)
 #   2. Sources client environment
 #   3. Generates WEBUI_SECRET_KEY if placeholder detected
-#   4. Detects GPU availability and selects docker compose profile
+#   4. Detects GPU availability and selects ${DOCKER} compose profile
 #   5. Downgrades models for CPU profile (smaller models, less VRAM)
 #   6. Regenerates LiteLLM proxy_config.yaml with correct model tags
 #   7. Runs LiteLLM version security check (blocks backdoored 1.82.7/1.82.8)
@@ -16,6 +16,17 @@
 #  10. Starts the full Docker Compose stack
 
 set -euo pipefail
+
+# ── Docker command detection (WSL/Git Bash on Windows) ───────────────────────
+# When running under WSL or Git Bash, 'docker' may not exist but 'docker.exe' does
+if command -v docker &>/dev/null; then
+  DOCKER="docker"
+elif command -v docker.exe &>/dev/null; then
+  DOCKER="docker.exe"
+else
+  echo "[bootstrap] ERROR Docker not found. Install Docker Desktop." >&2
+  exit 1
+fi
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -33,9 +44,9 @@ log_error() { echo "[bootstrap] ERROR $*" >&2; }
 # ── Step 1: Validate prerequisites ───────────────────────────────────────────
 log_info "Validating prerequisites..."
 
-if ! docker compose version &>/dev/null; then
+if ! ${DOCKER} compose version &>/dev/null; then
   log_error "Docker Compose V2 is required. Install Docker Desktop (which bundles it) or run:"
-  log_error "  docker compose version"
+  log_error "  ${DOCKER} compose version"
   exit 1
 fi
 
@@ -142,9 +153,9 @@ log_info "Generated proxy_config.yaml with models: ${REASONING_MODEL}, ${CLASSIF
 # SECURITY: LiteLLM versions 1.82.7 and 1.82.8 were backdoored in a March 2026
 # supply chain attack (TeamPCP / Trivy CI/CD compromise). Block those versions.
 log_info "Pulling LiteLLM image and checking version..."
-docker pull ghcr.io/berriai/litellm:main-latest
+${DOCKER} pull ghcr.io/berriai/litellm:main-latest
 
-LITELLM_VERSION=$(docker run --rm ghcr.io/berriai/litellm:main-latest litellm --version 2>/dev/null || echo "unknown")
+LITELLM_VERSION=$(${DOCKER} run --rm ghcr.io/berriai/litellm:main-latest litellm --version 2>/dev/null || echo "unknown")
 log_info "LiteLLM version: ${LITELLM_VERSION}"
 
 if [[ "${LITELLM_VERSION}" != "unknown" ]]; then
@@ -186,15 +197,15 @@ fi
 log_info "Starting Ollama (${PROFILE} profile)..."
 
 # Try to start only the Ollama service matching the profile; fall back to full up if needed
-docker compose --profile "${PROFILE}" up -d ollama-gpu ollama-cpu 2>/dev/null || \
-  docker compose --profile "${PROFILE}" up -d
+${DOCKER} compose --profile "${PROFILE}" up -d ollama-gpu ollama-cpu 2>/dev/null || \
+  ${DOCKER} compose --profile "${PROFILE}" up -d
 
 log_info "Waiting for Ollama to be ready (timeout: ${OLLAMA_READY_TIMEOUT}s)..."
 ELAPSED=0
 until wget -qO- http://localhost:11434/api/tags &>/dev/null 2>&1; do
   if [[ ${ELAPSED} -ge ${OLLAMA_READY_TIMEOUT} ]]; then
     log_error "Timed out waiting for Ollama after ${OLLAMA_READY_TIMEOUT}s."
-    log_error "Check container logs: docker compose --profile ${PROFILE} logs ollama-gpu ollama-cpu"
+    log_error "Check container logs: ${DOCKER} compose --profile ${PROFILE} logs ollama-gpu ollama-cpu"
     exit 1
   fi
   sleep 2
@@ -207,14 +218,14 @@ log_info "Pulling models into Ollama..."
 
 for MODEL in "${REASONING_MODEL}" "${CLASSIFIER_MODEL}" "${EMBEDDING_MODEL}"; do
   log_info "Pulling ${MODEL}..."
-  docker exec ollama ollama pull "${MODEL}"
+  ${DOCKER} exec ollama ollama pull "${MODEL}"
 done
 
 log_info "All models pulled"
 
 # ── Step 10: Start full stack ─────────────────────────────────────────────────
 log_info "Starting full stack..."
-docker compose --profile "${PROFILE}" up -d
+${DOCKER} compose --profile "${PROFILE}" up -d
 
 log_info "Stack started successfully"
 log_info ""
@@ -224,7 +235,7 @@ log_info "  LiteLLM:    http://localhost:4000"
 log_info "  Ollama:     http://localhost:11434"
 log_info ""
 log_info "To check container status:"
-log_info "  docker compose --profile ${PROFILE} ps"
+log_info "  ${DOCKER} compose --profile ${PROFILE} ps"
 log_info ""
 log_info "To view logs:"
-log_info "  docker compose --profile ${PROFILE} logs -f"
+log_info "  ${DOCKER} compose --profile ${PROFILE} logs -f"
