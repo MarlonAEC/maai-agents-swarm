@@ -18,13 +18,14 @@
 set -euo pipefail
 
 # ── Docker command detection (WSL/Git Bash on Windows) ───────────────────────
-# When running under WSL or Git Bash, 'docker' may not exist but 'docker.exe' does
-if command -v docker &>/dev/null; then
+# When running under WSL or Git Bash, 'docker' may exist as a stub but fail to
+# connect. Test that the command actually works before trusting it.
+if command -v docker &>/dev/null && docker info &>/dev/null; then
   DOCKER="docker"
-elif command -v docker.exe &>/dev/null; then
+elif command -v docker.exe &>/dev/null && docker.exe info &>/dev/null; then
   DOCKER="docker.exe"
 else
-  echo "[bootstrap] ERROR Docker not found. Install Docker Desktop." >&2
+  echo "[bootstrap] ERROR Docker not found or not running. Install/start Docker Desktop." >&2
   exit 1
 fi
 
