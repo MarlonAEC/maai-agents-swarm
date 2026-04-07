@@ -1,0 +1,6 @@
+# Model configuration for bootstrap.sh
+# GPU profile uses these directly; CPU profile auto-downgrades reasoning + classifier
+models:
+  reasoning: qwen3:14b        # Overridden to qwen3:7b on CPU
+  classifier: gemma3:4b       # Overridden to gemma3:1b on CPU
+  embedding: nomic-embed-text  # Same on both profiles
