@@ -31,7 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. LiteLLM proxy routes a test request to Qwen3 14B and a separate request to Gemma 3 4B correctly
   4. GPU acceleration is confirmed active (Ollama logs show GPU device, not CPU fallback)
   5. Per-client config folder is mounted and loaded — changing a value in client.env is reflected at startup
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Docker Compose stack, client config, LiteLLM proxy config, test scaffold
+- [ ] 01-02-PLAN.md — Bootstrap script (GPU detection, model pull, config generation) + end-to-end verification
 
 ### Phase 2: Core API and End-to-End Chat
 **Goal**: A user message travels from Open WebUI through the Pipelines connector and Core API to a CrewAI freeform agent and returns a coherent response
@@ -101,7 +105,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 0/TBD | Not started | - |
+| 1. Infrastructure Foundation | 0/2 | Planning complete | - |
 | 2. Core API and End-to-End Chat | 0/TBD | Not started | - |
 | 3. Tool System and Skills | 0/TBD | Not started | - |
 | 4. Document Ingestion and RAG | 0/TBD | Not started | - |
