@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Environment files (keep examples, ignore actual secrets)
+# client.env is tracked as it has a placeholder value; real deployments should gitignore it
+# .env is tracked as it only has CLIENT_ENV_PATH (no secrets)
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
