@@ -9,12 +9,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Platform deploys via single `docker compose up` command per client
-- [ ] **INFRA-02**: All processing runs locally — no data leaves the client's machine
-- [ ] **INFRA-03**: Each client has isolated config folder (agents.yaml, workflows.yaml, prompts/, client.env)
+- [x] **INFRA-01**: Platform deploys via single `docker compose up` command per client
+- [x] **INFRA-02**: All processing runs locally — no data leaves the client's machine
+- [x] **INFRA-03**: Each client has isolated config folder (agents.yaml, workflows.yaml, prompts/, client.env)
 - [ ] **INFRA-04**: Ollama serves local LLMs with GPU acceleration when available
 - [ ] **INFRA-05**: LiteLLM proxy routes requests to different models per task type
-- [ ] **INFRA-06**: Docker Compose networking resolves service names correctly (no localhost pitfalls)
+- [x] **INFRA-06**: Docker Compose networking resolves service names correctly (no localhost pitfalls)
 
 ### Chat Interface
 
@@ -104,12 +104,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
+| INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 1 | Pending |
 | INFRA-05 | Phase 1 | Pending |
-| INFRA-06 | Phase 1 | Pending |
+| INFRA-06 | Phase 1 | Complete |
 | CHAT-01 | Phase 2 | Pending |
 | CHAT-02 | Phase 2 | Pending |
 | CHAT-03 | Phase 2 | Pending |
