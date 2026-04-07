@@ -1,0 +1,109 @@
+name: maai-platform
+
+networks:
+  maai-net:
+    driver: bridge
+
+volumes:
+  ollama-models:
+  webui-data:
+
+services:
+
+  # ── Ollama: GPU profile ────────────────────────────────────────────────────
+  ollama-gpu:
+    container_name: ollama
+    image: ollama/ollama
+    profiles: [gpu]
+    volumes:
+      - ollama-models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:11434/api/tags > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # ── Ollama: CPU profile ────────────────────────────────────────────────────
+  ollama-cpu:
+    container_name: ollama
+    image: ollama/ollama
+    profiles: [cpu]
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:11434/api/tags > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # ── LiteLLM proxy ─────────────────────────────────────────────────────────
+  litellm:
+    container_name: litellm
+    image: ghcr.io/berriai/litellm:main-latest  # MUST resolve to >=1.83.0 — versions 1.82.7/1.82.8 were backdoored
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ./config/litellm/proxy_config.yaml:/app/config.yaml:ro
+    env_file:
+      - ${CLIENT_ENV_PATH:-clients/default/client.env}
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health/liveliness > /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      ollama-gpu:
+        condition: service_healthy
+        required: false
+      ollama-cpu:
+        condition: service_healthy
+        required: false
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # ── Open WebUI ─────────────────────────────────────────────────────────────
+  open-webui:
+    container_name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    environment:
+      - ENABLE_OLLAMA_API=false
+      - ENABLE_OPENAI_API=true
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - WEBUI_AUTH=true
+      - PORT=8080
+    env_file:
+      - ${CLIENT_ENV_PATH:-clients/default/client.env}
+    ports:
+      - "${WEBUI_PORT:-3000}:8080"
+    volumes:
+      - webui-data:/app/backend/data
+    depends_on:
+      litellm:
+        condition: service_healthy
+    networks:
+      - maai-net
+    restart: unless-stopped
