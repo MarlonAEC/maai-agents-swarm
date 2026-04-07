@@ -104,52 +104,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
-| INFRA-06 | — | Pending |
-| CHAT-01 | — | Pending |
-| CHAT-02 | — | Pending |
-| CHAT-03 | — | Pending |
-| CHAT-04 | — | Pending |
-| CHAT-05 | — | Pending |
-| CHAT-06 | — | Pending |
-| AGNT-01 | — | Pending |
-| AGNT-02 | — | Pending |
-| AGNT-03 | — | Pending |
-| AGNT-04 | — | Pending |
-| AGNT-05 | — | Pending |
-| AGNT-06 | — | Pending |
-| AGNT-07 | — | Pending |
-| AGNT-08 | — | Pending |
-| AGNT-09 | — | Pending |
-| DOCP-01 | — | Pending |
-| DOCP-02 | — | Pending |
-| DOCP-03 | — | Pending |
-| DOCP-04 | — | Pending |
-| DOCP-05 | — | Pending |
-| DOCP-06 | — | Pending |
-| DOCP-07 | — | Pending |
-| BIZZ-01 | — | Pending |
-| BIZZ-02 | — | Pending |
-| BIZZ-03 | — | Pending |
-| BIZZ-04 | — | Pending |
-| BIZZ-05 | — | Pending |
-| BIZZ-06 | — | Pending |
-| BIZZ-07 | — | Pending |
-| DEPL-01 | — | Pending |
-| DEPL-02 | — | Pending |
-| DEPL-03 | — | Pending |
-| DEPL-04 | — | Pending |
-| DEPL-05 | — | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| INFRA-05 | Phase 1 | Pending |
+| INFRA-06 | Phase 1 | Pending |
+| CHAT-01 | Phase 2 | Pending |
+| CHAT-02 | Phase 2 | Pending |
+| CHAT-03 | Phase 2 | Pending |
+| CHAT-04 | Phase 2 | Pending |
+| CHAT-05 | Phase 2 | Pending |
+| CHAT-06 | Phase 2 | Pending |
+| AGNT-01 | Phase 3 | Pending |
+| AGNT-02 | Phase 3 | Pending |
+| AGNT-03 | Phase 3 | Pending |
+| AGNT-04 | Phase 3 | Pending |
+| AGNT-05 | Phase 3 | Pending |
+| AGNT-06 | Phase 3 | Pending |
+| AGNT-07 | Phase 2 | Pending |
+| AGNT-08 | Phase 2 | Pending |
+| AGNT-09 | Phase 2 | Pending |
+| DOCP-01 | Phase 4 | Pending |
+| DOCP-02 | Phase 4 | Pending |
+| DOCP-03 | Phase 4 | Pending |
+| DOCP-04 | Phase 4 | Pending |
+| DOCP-05 | Phase 4 | Pending |
+| DOCP-06 | Phase 4 | Pending |
+| DOCP-07 | Phase 4 | Pending |
+| BIZZ-01 | Phase 5 | Pending |
+| BIZZ-02 | Phase 5 | Pending |
+| BIZZ-03 | Phase 5 | Pending |
+| BIZZ-04 | Phase 5 | Pending |
+| BIZZ-05 | Phase 5 | Pending |
+| BIZZ-06 | Phase 5 | Pending |
+| BIZZ-07 | Phase 5 | Pending |
+| DEPL-01 | Phase 6 | Pending |
+| DEPL-02 | Phase 6 | Pending |
+| DEPL-03 | Phase 6 | Pending |
+| DEPL-04 | Phase 6 | Pending |
+| DEPL-05 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39
+- Mapped to phases: 39
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation — all requirements mapped*
