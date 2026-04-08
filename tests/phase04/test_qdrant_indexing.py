@@ -5,7 +5,7 @@ Covers:
 - init_embed_model sets the correct 768-dim OllamaEmbedding model
 - SemanticSplitterNodeParser called with breakpoint_percentile_threshold=95
 - VectorStoreIndex created with the chunked nodes and storage context
-- Embed model is nomic-embed-text (not the OpenAI 1536-dim default)
+- Embed model is nomic-embed-text (not the OpenAI default which causes dim mismatch)
 """
 
 from unittest.mock import MagicMock, call, patch
@@ -33,7 +33,7 @@ def test_init_embed_model_768_dims():
     """OllamaEmbedding is configured with nomic-embed-text, NOT the OpenAI default.
 
     This test verifies the Research Pitfall 2 fix: if Settings.embed_model is
-    not explicitly set, LlamaIndex defaults to 1536-dim OpenAI embeddings,
+    not explicitly set, LlamaIndex defaults to OpenAI embeddings,
     causing Qdrant collection dimension mismatch errors.
     """
     with (
@@ -48,7 +48,7 @@ def test_init_embed_model_768_dims():
 
         init_embed_model()
 
-        # Must use nomic-embed-text (768-dim), not the OpenAI default (1536-dim)
+        # Must use nomic-embed-text (768-dim), not the OpenAI default (wrong dim for Qdrant)
         call_kwargs = mock_cls.call_args
         assert call_kwargs is not None, "OllamaEmbedding was not constructed"
         model_name = call_kwargs.kwargs.get("model_name") or call_kwargs.args[0]

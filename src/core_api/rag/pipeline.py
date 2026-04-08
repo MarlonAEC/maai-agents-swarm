@@ -3,8 +3,8 @@ RAG pipeline helpers — LlamaIndex + Qdrant for document indexing and retrieval
 
 CRITICAL (Research Pitfall 2): Settings.embed_model MUST be set via init_embed_model()
 at application startup BEFORE any Qdrant operations. nomic-embed-text produces 768-dim
-vectors; if Settings.embed_model is not set, LlamaIndex defaults to 1536 dims (OpenAI)
-causing Qdrant dimension mismatch errors.
+vectors; if Settings.embed_model is not set, LlamaIndex defaults to OpenAI embeddings
+causing Qdrant collection dimension mismatch errors.
 
 Per-client isolation: each client gets a dedicated collection named maai_{client_id}_documents.
 """
@@ -26,8 +26,8 @@ def init_embed_model() -> None:
     """Set the global LlamaIndex embed model to OllamaEmbedding with nomic-embed-text.
 
     MUST be called at application startup BEFORE any Qdrant operations.
-    nomic-embed-text produces 768-dim vectors; the OpenAI default is 1536-dim,
-    which causes Qdrant collection dimension mismatch errors.
+    nomic-embed-text produces 768-dim vectors; the OpenAI default produces a different
+    dimension count, causing Qdrant collection dimension mismatch errors.
     """
     model_name = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
