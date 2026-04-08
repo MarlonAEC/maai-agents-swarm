@@ -125,8 +125,11 @@ services:
       - LITELLM_BASE_URL=http://litellm:4000/v1
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-maai-local}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - CLIENT_ID=${CLIENT_ID:-default}                          # Phase 3: skill/tool config lookup
+      - OLLAMA_BASE_URL=http://ollama:11434                       # Phase 3: direct Ollama access for skill matcher embeddings
     volumes:
       - maai-uploads:/app/uploads
+      - ./clients:/app/clients:ro    # Per-client skills and tools config (Phase 3)
     ports:
       - "${CORE_API_PORT:-8000}:8000"
     healthcheck:
@@ -138,6 +141,12 @@ services:
     depends_on:
       litellm:
         condition: service_healthy
+      ollama-gpu:
+        condition: service_healthy
+        required: false
+      ollama-cpu:
+        condition: service_healthy
+        required: false
     networks:
       - maai-net
     restart: unless-stopped
