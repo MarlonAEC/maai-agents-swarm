@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Infrastructure Foundation** - Docker stack with Ollama, LiteLLM, and Open WebUI confirmed working end-to-end
 - [ ] **Phase 2: Core API and End-to-End Chat** - Minimal chat path from Open WebUI through Pipelines to CrewAI freeform agent
-- [ ] **Phase 3: Tool System and Skills** - Plugin registry, YAML-driven skills, and Skill Matcher routing
+- [x] **Phase 3: Tool System and Skills** - Plugin registry, YAML-driven skills, and Skill Matcher routing (completed 2026-04-08)
 - [ ] **Phase 4: Document Ingestion and RAG** - Full ingestion pipeline (Docling + PaddleOCR) and per-client RAG knowledge base
 - [ ] **Phase 5: Business Plugins** - File organization, email integration, spreadsheet generation, and NotebookLM MCP
 - [ ] **Phase 6: Production Readiness** - Deployment packaging, health checks, onboarding flow, and resource safeguards
@@ -64,13 +64,13 @@ Plans:
   3. A request with no matching skill falls through to the freeform agent without error
   4. Disabling a tool in YAML config causes it to disappear from the available tool set at next startup — no code change required
   5. A workflow configured as confirm-first pauses and shows a confirmation prompt before executing; auto-execute workflows run immediately
-**Plans:** 2/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 03-01-PLAN.md -- Skill system data models, tool registry, skill registry, and three-zone matcher
 - [x] 03-02-PLAN.md -- Echo tool plugin, example skill YAML, tool allowlist, and unit test scaffold
-- [ ] 03-03-PLAN.md -- Skill executor, chat router integration, and lifespan registry initialization
-- [ ] 03-04-PLAN.md -- Docker Compose wiring and executor/router integration tests
+- [x] 03-03-PLAN.md -- Skill executor, chat router integration, and lifespan registry initialization
+- [x] 03-04-PLAN.md -- Docker Compose wiring and executor/router integration tests
 
 ### Phase 4: Document Ingestion and RAG
 **Goal**: Users can upload or point the system at documents and ask questions about their content; documents are classified and queryable via the per-client knowledge base
@@ -117,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 1/2 | In Progress|  |
 | 2. Core API and End-to-End Chat | 2/3 | In Progress|  |
-| 3. Tool System and Skills | 2/4 | In Progress|  |
+| 3. Tool System and Skills | 4/4 | Complete   | 2026-04-08 |
 | 4. Document Ingestion and RAG | 0/TBD | Not started | - |
 | 5. Business Plugins | 0/TBD | Not started | - |
 | 6. Production Readiness | 0/TBD | Not started | - |
