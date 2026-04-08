@@ -1,0 +1,5 @@
+# Per-client tool allowlist.
+# Only listed tools are available to skills.
+# Omit this file entirely to enable all discovered tools.
+enabled_tools:
+  - echo

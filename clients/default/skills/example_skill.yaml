@@ -1,0 +1,20 @@
+name: example_skill
+description: "An example skill that echoes back what you say."
+triggers:
+  - "echo this"
+  - "repeat after me"
+  - "say it back"
+autonomy: confirm-first
+tools:
+  - echo
+agent:
+  role: "Echo Agent"
+  goal: "Echo back the user's message exactly as provided."
+  backstory: >
+    You are a simple demonstration agent. You receive a message
+    and return it verbatim to confirm the skill system is working.
+task:
+  description: >
+    Echo the following user message back exactly:
+    {user_message}
+  expected_output: "The user's message echoed back verbatim."
