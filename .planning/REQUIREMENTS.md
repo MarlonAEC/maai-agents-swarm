@@ -18,9 +18,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Chat Interface
 
-- [ ] **CHAT-01**: User interacts via Open WebUI chat interface in their browser
-- [ ] **CHAT-02**: Chat history persists across browser sessions
-- [ ] **CHAT-03**: User can upload files directly in chat for processing
+- [x] **CHAT-01**: User interacts via Open WebUI chat interface in their browser
+- [x] **CHAT-02**: Chat history persists across browser sessions
+- [x] **CHAT-03**: User can upload files directly in chat for processing
 - [ ] **CHAT-04**: User can describe tasks in natural language and the system executes them
 - [ ] **CHAT-05**: User can ask freeform questions not covered by pre-configured skills
 - [ ] **CHAT-06**: Multi-turn conversation context maintained within a session
@@ -110,9 +110,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-04 | Phase 1 | Complete |
 | INFRA-05 | Phase 1 | Complete |
 | INFRA-06 | Phase 1 | Complete |
-| CHAT-01 | Phase 2 | Pending |
-| CHAT-02 | Phase 2 | Pending |
-| CHAT-03 | Phase 2 | Pending |
+| CHAT-01 | Phase 2 | Complete |
+| CHAT-02 | Phase 2 | Complete |
+| CHAT-03 | Phase 2 | Complete |
 | CHAT-04 | Phase 2 | Pending |
 | CHAT-05 | Phase 2 | Pending |
 | CHAT-06 | Phase 2 | Pending |

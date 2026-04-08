@@ -47,11 +47,11 @@ Plans:
   3. User can upload a file in chat and the system acknowledges it for processing
   4. Multi-turn context is maintained — a follow-up question in the same session can reference prior messages
   5. Agent inference does not silently drop tool calls (smoke test confirms stream=False path works end-to-end)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — Core API service (FastAPI + CrewAI freeform agent + Dockerfile)
-- [ ] 02-02-PLAN.md — Pipelines pipe plugin (Open WebUI -> Core API bridge)
+- [x] 02-02-PLAN.md — Pipelines pipe plugin (Open WebUI -> Core API bridge)
 - [ ] 02-03-PLAN.md — Docker Compose wiring, test scaffold, and end-to-end verification
 
 ### Phase 3: Tool System and Skills
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 1/2 | In Progress|  |
-| 2. Core API and End-to-End Chat | 0/3 | Not started | - |
+| 2. Core API and End-to-End Chat | 1/3 | In Progress|  |
 | 3. Tool System and Skills | 0/TBD | Not started | - |
 | 4. Document Ingestion and RAG | 0/TBD | Not started | - |
 | 5. Business Plugins | 0/TBD | Not started | - |
