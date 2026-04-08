@@ -90,11 +90,12 @@ services:
     environment:
       - ENABLE_OLLAMA_API=false
       - ENABLE_OPENAI_API=true
-      - OPENAI_API_BASE_URL=http://litellm:4000/v1
-      - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      - OPENAI_API_BASE_URLS=http://litellm:4000/v1
+      - OPENAI_API_KEYS=${LITELLM_MASTER_KEY}
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
       - WEBUI_AUTH=true
       - PORT=8080
+      - ENABLE_WEBSOCKET_SUPPORT=false
     env_file:
       - ${CLIENT_ENV_PATH:-clients/default/client.env}
     ports:

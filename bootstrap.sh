@@ -146,6 +146,7 @@ general_settings:
 
 litellm_settings:
   drop_params: true
+  merge_reasoning_content_in_choices: true
 EOF
 
 log_info "Generated proxy_config.yaml with models: ${REASONING_MODEL}, ${CLASSIFIER_MODEL}, ${EMBEDDING_MODEL}"
@@ -200,7 +201,7 @@ fi
 # variables Compose needs for host-side resolution.
 DOT_ENV="${SCRIPT_DIR}/.env"
 cat > "${DOT_ENV}" <<EOF
-CLIENT_ENV_PATH=${ENV_FILE}
+CLIENT_ENV_PATH=clients/${CLIENT}/client.env
 WEBUI_PORT=${WEBUI_PORT:-3000}
 LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
 WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
