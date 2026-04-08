@@ -85,11 +85,11 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 04-00-PLAN.md -- Wave 0: test stubs and conftest for tests/phase04/
-- [ ] 04-01-PLAN.md -- Docproc sidecar service (Docling + EasyOCR FastAPI container)
-- [ ] 04-02-PLAN.md -- Core-API RAG foundation (LlamaIndex pipeline, GPU lock, ARQ worker)
-- [ ] 04-03-PLAN.md -- Skills, tools (incl. call_ingest), ingest router, and main.py wiring
-- [ ] 04-04-PLAN.md -- Docker Compose services (Redis, Qdrant, docproc, ingest-worker)
+- [x] 04-00-PLAN.md -- Wave 0: test stubs and conftest for tests/phase04/
+- [x] 04-01-PLAN.md -- Docproc sidecar service (Docling + EasyOCR FastAPI container)
+- [x] 04-02-PLAN.md -- Core-API RAG foundation (LlamaIndex pipeline, GPU lock, ARQ worker)
+- [x] 04-03-PLAN.md -- Skills, tools (incl. call_ingest), ingest router, and main.py wiring
+- [x] 04-04-PLAN.md -- Docker Compose services (Redis, Qdrant, docproc, ingest-worker)
 - [ ] 04-05-PLAN.md -- Test hardening and full suite validation
 
 ### Phase 5: Business Plugins
@@ -126,6 +126,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Infrastructure Foundation | 1/2 | In Progress|  |
 | 2. Core API and End-to-End Chat | 2/3 | In Progress|  |
 | 3. Tool System and Skills | 4/4 | Complete   | 2026-04-08 |
-| 4. Document Ingestion and RAG | 0/6 | In Progress | - |
+| 4. Document Ingestion and RAG | 5/6 | In Progress|  |
 | 5. Business Plugins | 0/TBD | Not started | - |
 | 6. Production Readiness | 0/TBD | Not started | - |

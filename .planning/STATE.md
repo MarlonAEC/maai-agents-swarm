@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-08T18:47:36.064Z"
+stopped_at: Completed 04-document-ingestion-and-rag 04-05-PLAN.md
+last_updated: "2026-04-08T21:20:12.406Z"
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 15
+  completed_plans: 15
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Clients can describe what they need in natural language and the system executes it using local AI — no cloud dependencies, no data leaving their machine.
-**Current focus:** Phase 03 — tool-system-and-skills
+**Current focus:** Phase 04 — document-ingestion-and-rag
 
 ## Current Position
 
-Phase: 4
+Phase: 5
 Plan: Not started
 
 ## Performance Metrics
@@ -55,6 +55,12 @@ Plan: Not started
 | Phase 03-tool-system-and-skills P03 | 138 | 2 tasks | 3 files |
 | Phase 03-tool-system-and-skills P02 | 5 | 2 tasks | 9 files |
 | Phase 03-tool-system-and-skills P04 | 247 | 2 tasks | 5 files |
+| Phase 04-document-ingestion-and-rag P00 | 1 | 1 tasks | 9 files |
+| Phase 04-document-ingestion-and-rag P01 | 226 | 2 tasks | 8 files |
+| Phase 04-document-ingestion-and-rag P02 | 238 | 3 tasks | 15 files |
+| Phase 04-document-ingestion-and-rag P03 | 12 | 3 tasks | 13 files |
+| Phase 04-document-ingestion-and-rag P04 | 123 | 2 tasks | 3 files |
+| Phase 04-document-ingestion-and-rag P05 | 25 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -88,6 +94,18 @@ Recent decisions affecting current work:
 - [Phase 03-tool-system-and-skills]: Plain class crewai stub (not Pydantic BaseModel) so EchoTool.name accessible at class level matching real crewai behaviour
 - [Phase 03-tool-system-and-skills]: Inject caplog.handler directly into skills.executor logger (propagate=False) to capture WARNING records in tests
 - [Phase 03-tool-system-and-skills]: Extend crewai stub in conftest with Agent/Task/Crew/LLM/Process/crewai.project for executor and freeform_crew import compatibility
+- [Phase 04-document-ingestion-and-rag]: xfail stubs reference specific plan numbers (Plan 01-04) so developers know which plan fills each stub
+- [Phase 04-document-ingestion-and-rag]: conftest.py stubs docling, llama_index, qdrant_client, arq, and redis via MagicMock so pytest can collect without heavy deps installed
+- [Phase 04-document-ingestion-and-rag]: EasyOCR used as Docling OCR backend instead of PaddleOCR — PaddleOCR is not a native Docling backend (RESEARCH.md finding). Satisfies DOCP-02.
+- [Phase 04-document-ingestion-and-rag]: opencv-python-headless instead of opencv-python — avoids libGL dependency absent in python:3.11-slim (Research Pitfall 1)
+- [Phase 04-document-ingestion-and-rag]: Settings.embed_model set to OllamaEmbedding(nomic-embed-text) via init_embed_model() before any Qdrant operations to produce 768-dim vectors matching Qdrant collection schema
+- [Phase 04-document-ingestion-and-rag]: ARQ max_jobs=1 serializes document ingestion for GPU sequencing; GPU lock (Redis SET NX PX) covers docproc HTTP call where OCR runs; released in finally block
+- [Phase 04-document-ingestion-and-rag]: CallIngestTool POSTs to /ingest (same process via localhost) — avoids inter-service dep, enables skill-based job queueing per D-02
+- [Phase 04-document-ingestion-and-rag]: Phase 4 conftest adds crewai stub (same as phase3) — allows tests to run without crewai installed
+- [Phase 04-document-ingestion-and-rag]: ingest-worker reuses core-api build context (./src/core_api) — shares Dockerfile and all deps, overrides CMD to arq workers.ingest_worker.WorkerSettings
+- [Phase 04-document-ingestion-and-rag]: docproc start_period=120s — Docling loads large ML models on cold start, can take 60-90s before /health responds
+- [Phase 04-document-ingestion-and-rag]: DOCPROC_USE_GPU defaults to false — EasyOCR GPU requires CUDA; most client desktops are CPU-only
+- [Phase 04-document-ingestion-and-rag]: Patch rag.pipeline.Document at module level to assert metadata kwargs — avoids fragile MagicMock chain traversal on stubbed llama_index.core.Document
 
 ### Pending Todos
 
@@ -100,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T18:47:36.062Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-document-ingestion-and-rag/04-CONTEXT.md
+Last session: 2026-04-08T21:12:52.423Z
+Stopped at: Completed 04-document-ingestion-and-rag 04-05-PLAN.md
+Resume file: None
