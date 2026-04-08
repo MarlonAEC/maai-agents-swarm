@@ -1,0 +1,16 @@
+freeform_task:
+  description: >
+    Respond to the user's message in the context of the conversation history.
+
+    Conversation history:
+    {messages}
+
+    Current user message: {user_message}
+
+    Provide a clear, helpful response. If the user asks you to do something
+    that requires capabilities not yet implemented (file processing, email,
+    spreadsheets, document analysis), acknowledge the request and explain
+    it will be available in a future update.
+  expected_output: >
+    A clear, conversational response to the user's message.
+  agent: freeform_agent
