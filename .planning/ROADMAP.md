@@ -82,7 +82,14 @@ Plans:
   3. User can ask a question about an indexed document and receive an answer with relevant context retrieved from Qdrant
   4. Two test clients have isolated Qdrant collections — a document indexed for client A is not returned in client B's queries
   5. LLM inference and OCR do not run concurrently — GPU workloads are sequenced and no VRAM starvation occurs under load
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- Docproc sidecar service (Docling + EasyOCR FastAPI container)
+- [ ] 04-02-PLAN.md -- Core-API RAG foundation (LlamaIndex pipeline, GPU lock, ARQ worker)
+- [ ] 04-03-PLAN.md -- Skills, tools, ingest router, and main.py wiring
+- [ ] 04-04-PLAN.md -- Docker Compose services (Redis, Qdrant, docproc, ingest-worker)
+- [ ] 04-05-PLAN.md -- Unit tests for all Phase 4 modules
 
 ### Phase 5: Business Plugins
 **Goal**: The first client's core workflows are fully operational — files are organized, emails are searchable, structured data is exportable, and NotebookLM integration is live
@@ -94,7 +101,14 @@ Plans:
   3. User can connect an email account via IMAP credentials and search their inbox using natural language (e.g., "find invoices from March")
   4. User can ask for a summary of an email thread and receive a coherent summary without leaving the chat interface
   5. User can request a spreadsheet from document data and receive a downloadable .xlsx file with structured rows
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- Docproc sidecar service (Docling + EasyOCR FastAPI container)
+- [ ] 04-02-PLAN.md -- Core-API RAG foundation (LlamaIndex pipeline, GPU lock, ARQ worker)
+- [ ] 04-03-PLAN.md -- Skills, tools, ingest router, and main.py wiring
+- [ ] 04-04-PLAN.md -- Docker Compose services (Redis, Qdrant, docproc, ingest-worker)
+- [ ] 04-05-PLAN.md -- Unit tests for all Phase 4 modules
 
 ### Phase 6: Production Readiness
 **Goal**: The platform deploys cleanly to a new client machine via a single script, all services report health, and the system runs without impacting the client's daily desktop use
@@ -106,7 +120,14 @@ Plans:
   3. New client can complete email credential setup (IMAP or Gmail OAuth) through the onboarding flow without editing raw config files
   4. Platform runs successfully on a 16GB RAM desktop with 8GB GPU VRAM — models load and respond within acceptable time
   5. When idle, the platform's background resource usage does not noticeably impact the client's concurrent desktop applications
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- Docproc sidecar service (Docling + EasyOCR FastAPI container)
+- [ ] 04-02-PLAN.md -- Core-API RAG foundation (LlamaIndex pipeline, GPU lock, ARQ worker)
+- [ ] 04-03-PLAN.md -- Skills, tools, ingest router, and main.py wiring
+- [ ] 04-04-PLAN.md -- Docker Compose services (Redis, Qdrant, docproc, ingest-worker)
+- [ ] 04-05-PLAN.md -- Unit tests for all Phase 4 modules
 
 ## Progress
 
@@ -118,6 +139,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Infrastructure Foundation | 1/2 | In Progress|  |
 | 2. Core API and End-to-End Chat | 2/3 | In Progress|  |
 | 3. Tool System and Skills | 4/4 | Complete   | 2026-04-08 |
-| 4. Document Ingestion and RAG | 0/TBD | Not started | - |
+| 4. Document Ingestion and RAG | 0/5 | In Progress | - |
 | 5. Business Plugins | 0/TBD | Not started | - |
 | 6. Production Readiness | 0/TBD | Not started | - |
