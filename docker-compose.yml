@@ -8,6 +8,9 @@ volumes:
   ollama-models:
   webui-data:
   maai-uploads:    # Shared between pipelines (write) and core-api (read) — per D-15
+  qdrant-data:     # Qdrant persistent vector storage
+  redis-data:      # Redis persistence for ARQ job queue
+  easyocr-models:  # EasyOCR model cache for docproc
 
 services:
 
@@ -127,6 +130,11 @@ services:
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
       - CLIENT_ID=${CLIENT_ID:-default}                          # Phase 3: skill/tool config lookup
       - OLLAMA_BASE_URL=http://ollama:11434                       # Phase 3: direct Ollama access for skill matcher embeddings
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - DOCPROC_URL=http://docproc:8001
     volumes:
       - maai-uploads:/app/uploads
       - ./clients:/app/clients:ro    # Per-client skills and tools config (Phase 3)
@@ -140,6 +148,10 @@ services:
       start_period: 30s
     depends_on:
       litellm:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
         condition: service_healthy
       ollama-gpu:
         condition: service_healthy
@@ -168,6 +180,103 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # -- Redis (ARQ broker + GPU lock) -- Phase 4 D-11 ----------------------------
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # -- Qdrant (vector database) -- Phase 4 D-11 ---------------------------------
+  qdrant:
+    container_name: qdrant
+    image: qdrant/qdrant:v1.13.6
+    volumes:
+      - qdrant-data:/qdrant/storage
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:6333/healthz')\" 2>/dev/null || wget -q --spider http://localhost:6333/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # -- Docproc (Docling + EasyOCR document processor) -- Phase 4 D-09 -----------
+  docproc:
+    container_name: docproc
+    build:
+      context: ./src/docproc
+      dockerfile: Dockerfile
+    env_file:
+      - ${CLIENT_ENV_PATH:-clients/default/client.env}
+    environment:
+      - DOCPROC_USE_GPU=${DOCPROC_USE_GPU:-false}
+    volumes:
+      - maai-uploads:/app/uploads
+      - easyocr-models:/root/.EasyOCR
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # -- Ingest Worker (ARQ background document processor) -- Phase 4 D-01 --------
+  ingest-worker:
+    container_name: ingest-worker
+    build:
+      context: ./src/core_api
+      dockerfile: Dockerfile
+    command: ["arq", "workers.ingest_worker.WorkerSettings"]
+    env_file:
+      - ${CLIENT_ENV_PATH:-clients/default/client.env}
+    environment:
+      - LITELLM_BASE_URL=http://litellm:4000/v1
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-maai-local}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - CLIENT_ID=${CLIENT_ID:-default}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - DOCPROC_URL=http://docproc:8001
+    volumes:
+      - maai-uploads:/app/uploads
+      - ./clients:/app/clients:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      docproc:
+        condition: service_healthy
+      ollama-gpu:
+        condition: service_healthy
+        required: false
+      ollama-cpu:
+        condition: service_healthy
+        required: false
     networks:
       - maai-net
     restart: unless-stopped
