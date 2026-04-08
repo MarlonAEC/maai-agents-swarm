@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 02-02-PLAN.md — Pipelines pipe plugin
-last_updated: "2026-04-08T04:42:55.048Z"
+status: Ready to plan
+stopped_at: "Completed 02-03-PLAN.md — Docker wiring and test scaffold (checkpoint:human-verify pending)"
+last_updated: "2026-04-08T15:21:29.580Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 5
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 02 (core-api-and-end-to-end-chat) — EXECUTING
-Plan: 2 of 3
+Phase: 3
+Plan: Not started
 
 ## Performance Metrics
 
@@ -49,6 +49,8 @@ Plan: 2 of 3
 | Phase 01-infrastructure-foundation P01 | 4 | 3 tasks | 17 files |
 | Phase 01-infrastructure-foundation P02 | 1 | 1 tasks | 1 files |
 | Phase 02-core-api-and-end-to-end-chat P02 | 2 | 1 tasks | 1 files |
+| Phase 02-core-api-and-end-to-end-chat P01 | 2 | 2 tasks | 10 files |
+| Phase 02-core-api-and-end-to-end-chat P03 | 225 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -69,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 01-infrastructure-foundation]: LiteLLM version check is best-effort: unknown version warns but does not block bootstrap
 - [Phase 02-core-api-and-end-to-end-chat]: Pipe plugin uses self.type='pipe' (not filter) so it appears as selectable model in Open WebUI dropdown; filter would forward to LiteLLM which is wrong for this use case
 - [Phase 02-core-api-and-end-to-end-chat]: 120s default REQUEST_TIMEOUT in Pipelines plugin — CPU inference for Qwen3 14B is slow especially on model load
+- [Phase 02-core-api-and-end-to-end-chat]: openai/reasoning-model LiteLLM alias used for LLM inference; Ollama embedder points directly to http://ollama:11434/api/embeddings; stream=False + max_iter=5 + max_execution_time=60 guardrails; run_in_executor for async safety
+- [Phase 02-core-api-and-end-to-end-chat]: OPENAI_API_BASE_URLS and OPENAI_API_KEYS must have same semicolon-separated entry count — mismatch causes silent routing failures in Open WebUI
+- [Phase 02-core-api-and-end-to-end-chat]: maai-uploads is a named Docker volume shared between core-api and pipelines — persists across restarts, accessible by both containers
 
 ### Pending Todos
 
@@ -81,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T04:42:55.045Z
-Stopped at: Completed 02-02-PLAN.md — Pipelines pipe plugin
+Last session: 2026-04-08T04:49:54.892Z
+Stopped at: Completed 02-03-PLAN.md — Docker wiring and test scaffold (checkpoint:human-verify pending)
 Resume file: None

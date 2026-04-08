@@ -21,9 +21,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CHAT-01**: User interacts via Open WebUI chat interface in their browser
 - [x] **CHAT-02**: Chat history persists across browser sessions
 - [x] **CHAT-03**: User can upload files directly in chat for processing
-- [ ] **CHAT-04**: User can describe tasks in natural language and the system executes them
-- [ ] **CHAT-05**: User can ask freeform questions not covered by pre-configured skills
-- [ ] **CHAT-06**: Multi-turn conversation context maintained within a session
+- [x] **CHAT-04**: User can describe tasks in natural language and the system executes them
+- [x] **CHAT-05**: User can ask freeform questions not covered by pre-configured skills
+- [x] **CHAT-06**: Multi-turn conversation context maintained within a session
 
 ### Agent System
 
@@ -33,9 +33,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **AGNT-04**: Plugin-based tool system — tools enabled/disabled per client via YAML config
 - [ ] **AGNT-05**: Tool registry discovers and loads available plugins at startup
 - [ ] **AGNT-06**: Per-workflow autonomy control (auto-execute vs confirm-first) configurable in YAML
-- [ ] **AGNT-07**: CrewAI embedder explicitly configured for Ollama (not defaulting to OpenAI)
-- [ ] **AGNT-08**: Agent inference uses non-streaming mode to prevent tool call drops
-- [ ] **AGNT-09**: max_iter and max_execution_time caps on all agent loops to prevent runaway inference
+- [x] **AGNT-07**: CrewAI embedder explicitly configured for Ollama (not defaulting to OpenAI)
+- [x] **AGNT-08**: Agent inference uses non-streaming mode to prevent tool call drops
+- [x] **AGNT-09**: max_iter and max_execution_time caps on all agent loops to prevent runaway inference
 
 ### Document Processing
 
@@ -113,18 +113,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-01 | Phase 2 | Complete |
 | CHAT-02 | Phase 2 | Complete |
 | CHAT-03 | Phase 2 | Complete |
-| CHAT-04 | Phase 2 | Pending |
-| CHAT-05 | Phase 2 | Pending |
-| CHAT-06 | Phase 2 | Pending |
+| CHAT-04 | Phase 2 | Complete |
+| CHAT-05 | Phase 2 | Complete |
+| CHAT-06 | Phase 2 | Complete |
 | AGNT-01 | Phase 3 | Pending |
 | AGNT-02 | Phase 3 | Pending |
 | AGNT-03 | Phase 3 | Pending |
 | AGNT-04 | Phase 3 | Pending |
 | AGNT-05 | Phase 3 | Pending |
 | AGNT-06 | Phase 3 | Pending |
-| AGNT-07 | Phase 2 | Pending |
-| AGNT-08 | Phase 2 | Pending |
-| AGNT-09 | Phase 2 | Pending |
+| AGNT-07 | Phase 2 | Complete |
+| AGNT-08 | Phase 2 | Complete |
+| AGNT-09 | Phase 2 | Complete |
 | DOCP-01 | Phase 4 | Pending |
 | DOCP-02 | Phase 4 | Pending |
 | DOCP-03 | Phase 4 | Pending |
