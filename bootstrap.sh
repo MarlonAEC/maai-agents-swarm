@@ -195,6 +195,16 @@ else
 fi
 
 # ── Step 8: Start Ollama and wait for ready ───────────────────────────────────
+# Detect if a local Ollama is already using port 11434 — use alternate port if so
+OLLAMA_PORT="${OLLAMA_PORT:-11434}"
+if netstat -ano 2>/dev/null | grep -q ":${OLLAMA_PORT}.*LISTENING" || \
+   ss -tln 2>/dev/null | grep -q ":${OLLAMA_PORT} "; then
+  OLLAMA_PORT=11435
+  log_warn "Port 11434 already in use (local Ollama?). Mapping container to host port ${OLLAMA_PORT} instead."
+  log_warn "Internal service communication is unaffected (uses Docker network)."
+fi
+export OLLAMA_PORT
+
 log_info "Starting Ollama (${PROFILE} profile)..."
 
 # Try to start only the Ollama service matching the profile; fall back to full up if needed
@@ -233,7 +243,7 @@ log_info ""
 log_info "Access points:"
 log_info "  Open WebUI: http://localhost:${WEBUI_PORT:-3000}"
 log_info "  LiteLLM:    http://localhost:4000"
-log_info "  Ollama:     http://localhost:11434"
+log_info "  Ollama:     http://localhost:${OLLAMA_PORT}"
 log_info ""
 log_info "To check container status:"
 log_info "  ${DOCKER} compose --profile ${PROFILE} ps"
