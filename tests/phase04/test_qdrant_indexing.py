@@ -136,3 +136,46 @@ def test_qdrant_vector_upsert():
 
         # Returns chunk count
         assert result == 2
+
+
+def test_index_document_creates_metadata():
+    """index_document passes file_name, page_label, and client_id as metadata to Document.
+
+    This metadata is used by query_documents to build citations in D-06 format.
+    Verified by inspecting the kwargs passed to the Document() constructor.
+    """
+    mock_splitter = MagicMock()
+    mock_splitter.get_nodes_from_documents.return_value = [MagicMock()]
+
+    with (
+        patch("rag.pipeline.SemanticSplitterNodeParser", return_value=mock_splitter),
+        patch("rag.pipeline.QdrantVectorStore"),
+        patch("rag.pipeline.StorageContext"),
+        patch("rag.pipeline.VectorStoreIndex"),
+        patch("rag.pipeline._get_qdrant_client"),
+        patch("rag.pipeline.Settings"),
+        patch("rag.pipeline.Document") as mock_doc_cls,
+    ):
+        mock_doc_cls.return_value = MagicMock()
+
+        from rag.pipeline import index_document
+
+        index_document(
+            "my_client",
+            [{"page_no": 3, "text": "document content here"}],
+            "annual_report.pdf",
+        )
+
+    # Document() must have been called once with correct metadata kwargs
+    mock_doc_cls.assert_called_once()
+    call_kwargs = mock_doc_cls.call_args.kwargs
+    metadata = call_kwargs.get("metadata", {})
+    assert metadata["file_name"] == "annual_report.pdf", (
+        f"Expected file_name='annual_report.pdf' in metadata but got: {metadata}"
+    )
+    assert metadata["page_label"] == "3", (
+        f"Expected page_label='3' in metadata but got: {metadata}"
+    )
+    assert metadata["client_id"] == "my_client", (
+        f"Expected client_id='my_client' in metadata but got: {metadata}"
+    )

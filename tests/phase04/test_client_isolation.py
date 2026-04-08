@@ -67,3 +67,26 @@ def test_query_returns_only_own_docs():
         assert results[0]["score"] == 0.95
         assert results[0]["file_name"] == "a.pdf"
         assert results[0]["page_label"] == "1"
+
+
+def test_different_clients_different_collections():
+    """Two different client_ids produce two different, non-overlapping collection names.
+
+    Ensures per-client isolation: client A's documents cannot be returned for
+    client B's queries due to different Qdrant collections.
+    """
+    from rag.pipeline import _collection_name
+
+    client_a_collection = _collection_name("alpha_corp")
+    client_b_collection = _collection_name("beta_inc")
+
+    # Collections must be different — no cross-client data sharing
+    assert client_a_collection != client_b_collection
+
+    # Both must follow the naming convention (contains the client_id)
+    assert "alpha_corp" in client_a_collection
+    assert "beta_inc" in client_b_collection
+
+    # Both must use the standard prefix
+    assert client_a_collection.startswith("maai_")
+    assert client_b_collection.startswith("maai_")

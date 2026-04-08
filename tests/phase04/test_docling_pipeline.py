@@ -156,3 +156,55 @@ def test_process_unsupported_type(tmp_path, app_client):
     data = response.json()
     assert data["status"] == "error"
     assert "Unsupported" in data["detail"]
+
+
+def test_process_returns_full_text(tmp_path, app_client):
+    """POST /process full_text is the concatenation of all page texts."""
+    pdf_file = tmp_path / "multi.pdf"
+    pdf_file.write_bytes(b"%PDF-1.4 mock")
+
+    import main as docproc_main
+
+    elem1 = _make_text_element("First page text.", page_no=1)
+    elem2 = _make_text_element("Second page text.", page_no=2)
+    mock_result = _make_mock_convert_result(elem1, elem2)
+    docproc_main.app.state.converter_text.convert = MagicMock(return_value=mock_result)
+    docproc_main.app.state.converter_ocr.convert = MagicMock(return_value=mock_result)
+
+    response = app_client.post(
+        "/process",
+        json={"file_path": str(pdf_file), "ocr_enabled": False},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    full_text = data["full_text"]
+    # full_text must contain both pages' content joined together
+    assert "First page text." in full_text
+    assert "Second page text." in full_text
+
+
+def test_process_returns_total_pages(tmp_path, app_client):
+    """POST /process total_pages matches the number of unique pages in the document."""
+    pdf_file = tmp_path / "threepage.pdf"
+    pdf_file.write_bytes(b"%PDF-1.4 mock")
+
+    import main as docproc_main
+
+    elements = [
+        _make_text_element("Page A.", page_no=1),
+        _make_text_element("Page B.", page_no=2),
+        _make_text_element("Page C.", page_no=3),
+    ]
+    mock_result = _make_mock_convert_result(*elements)
+    docproc_main.app.state.converter_text.convert = MagicMock(return_value=mock_result)
+    docproc_main.app.state.converter_ocr.convert = MagicMock(return_value=mock_result)
+
+    response = app_client.post(
+        "/process",
+        json={"file_path": str(pdf_file), "ocr_enabled": False},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 3

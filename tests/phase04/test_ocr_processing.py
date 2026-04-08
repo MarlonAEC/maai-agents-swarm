@@ -127,3 +127,46 @@ def test_scanned_pdf_ocr_enabled(tmp_path):
     # The OCR converter should have been called, not the text converter
     mock_ocr_converter.convert.assert_called_once_with(str(pdf_file))
     mock_text_converter.convert.assert_not_called()
+
+
+def test_ocr_disabled_uses_text_converter(tmp_path):
+    """POST /process with ocr_enabled=False routes to the text-only converter (converter_text).
+
+    Verifies that digital-native PDFs skip the EasyOCR pipeline entirely,
+    avoiding unnecessary GPU workload on documents that don't need OCR.
+    """
+    import main as docproc_main
+    from fastapi.testclient import TestClient
+
+    pdf_file = tmp_path / "digital.pdf"
+    pdf_file.write_bytes(b"%PDF-1.4 digital native content")
+
+    elem = _make_text_element("Digital native text.", page_no=1)
+    mock_result = _make_mock_convert_result(elem)
+
+    mock_reader_cls = MagicMock()
+    mock_reader_cls.return_value = MagicMock()
+
+    with patch.object(docproc_main, "easyocr") as mock_easyocr_mod:
+        mock_easyocr_mod.Reader = mock_reader_cls
+
+        with TestClient(docproc_main.app, raise_server_exceptions=True) as client:
+            mock_ocr_converter = MagicMock()
+            mock_text_converter = MagicMock()
+            mock_text_converter.convert.return_value = mock_result
+
+            docproc_main.app.state.converter_ocr = mock_ocr_converter
+            docproc_main.app.state.converter_text = mock_text_converter
+
+            response = client.post(
+                "/process",
+                json={"file_path": str(pdf_file), "ocr_enabled": False},
+            )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+
+    # Text converter should have been called — NOT the OCR converter
+    mock_text_converter.convert.assert_called_once_with(str(pdf_file))
+    mock_ocr_converter.convert.assert_not_called()
