@@ -25,7 +25,9 @@ load_dotenv()
 import skills.registry as skill_reg  # noqa: E402 — must come after load_dotenv
 import skills.tool_registry as tool_reg  # noqa: E402 — must come after load_dotenv
 from logging_config import get_logger  # noqa: E402 — must come after load_dotenv
+from rag.pipeline import init_embed_model  # noqa: E402
 from routers.chat import router as chat_router  # noqa: E402
+from routers.ingest import router as ingest_router  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -56,6 +58,14 @@ async def lifespan(app: FastAPI):  # type: ignore[type-arg]
             "No skills directory found at %s -- skill matching disabled", skills_dir
         )
 
+    # Initialize LlamaIndex embedding model (DOCP-03, DOCP-04)
+    # CRITICAL: Must happen before any Qdrant operations to set 768-dim vectors
+    try:
+        init_embed_model()
+        logger.info("LlamaIndex embed model initialized")
+    except Exception as exc:
+        logger.warning("LlamaIndex embed model init failed (RAG disabled): %s", exc)
+
     logger.info("MAAI Core API started")
     yield
     logger.info("MAAI Core API shutting down")
@@ -69,6 +79,7 @@ app = FastAPI(
 )
 
 app.include_router(chat_router)
+app.include_router(ingest_router)
 
 
 @app.get("/health", tags=["ops"])
