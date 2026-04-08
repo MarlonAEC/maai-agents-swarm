@@ -38,27 +38,31 @@ created: 2026-04-08
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | AGNT-04 | unit | `pytest tests/phase3/test_tool_registry.py -x` | ❌ W0 | ⬜ pending |
-| 03-01-02 | 01 | 1 | AGNT-05 | unit | `pytest tests/phase3/test_tool_registry.py -x` | ❌ W0 | ⬜ pending |
-| 03-02-01 | 02 | 1 | AGNT-01 | unit | `pytest tests/phase3/test_skill_loader.py -x` | ❌ W0 | ⬜ pending |
-| 03-02-02 | 02 | 1 | AGNT-02 | unit | `pytest tests/phase3/test_skill_loader.py -x` | ❌ W0 | ⬜ pending |
-| 03-03-01 | 03 | 2 | AGNT-03 | unit | `pytest tests/phase3/test_skill_matcher.py -x` | ❌ W0 | ⬜ pending |
-| 03-03-02 | 03 | 2 | AGNT-03 | integration | `pytest tests/phase3/test_skill_matcher.py -x` | ❌ W0 | ⬜ pending |
-| 03-04-01 | 04 | 3 | AGNT-06 | unit | `pytest tests/phase3/test_autonomy.py -x` | ❌ W0 | ⬜ pending |
-| 03-04-02 | 04 | 3 | AGNT-02 | integration | `pytest tests/phase3/test_chat_routing.py -x` | ❌ W0 | ⬜ pending |
+| 03-01-01 | 01 | 1 | AGNT-04 | unit | `pytest tests/phase3/test_tool_registry.py -x` | W0 | pending |
+| 03-01-02 | 01 | 1 | AGNT-05 | unit | `pytest tests/phase3/test_tool_registry.py -x` | W0 | pending |
+| 03-02-01 | 02 | 2 | AGNT-01 | unit | `pytest tests/phase3/test_skill_registry.py -x` | W0 | pending |
+| 03-02-02 | 02 | 2 | AGNT-02 | unit | `pytest tests/phase3/test_skill_registry.py -x` | W0 | pending |
+| 03-03-01 | 03 | 2 | AGNT-03 | unit | `pytest tests/phase3/test_matcher.py -x` | W0 | pending |
+| 03-03-02 | 03 | 2 | AGNT-03 | integration | `pytest tests/phase3/test_matcher.py -x` | W0 | pending |
+| 03-04-01 | 04 | 3 | AGNT-06 | unit | `pytest tests/phase3/test_matcher.py tests/phase3/test_chat_router.py -x` | W0 | pending |
+| 03-04-02 | 04 | 3 | AGNT-02 | integration | `pytest tests/phase3/test_chat_router.py -x` | W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
+
+**Note on AGNT-06 (autonomy control):** Autonomy tests are consolidated across two test files rather than a standalone `test_autonomy.py`:
+- `test_matcher.py` covers autonomy-aware routing (auto-execute -> AUTO_RUN, confirm-first -> CONFIRM_FIRST)
+- `test_chat_router.py` covers the confirm-first chat flow (confirmation prompt, yes/no handling)
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `tests/phase3/conftest.py` — shared fixtures (mock Ollama embed, skill YAML fixtures)
-- [ ] `tests/phase3/test_tool_registry.py` — stubs for AGNT-04, AGNT-05
-- [ ] `tests/phase3/test_skill_loader.py` — stubs for AGNT-01, AGNT-02
-- [ ] `tests/phase3/test_skill_matcher.py` — stubs for AGNT-03
-- [ ] `tests/phase3/test_autonomy.py` — stubs for AGNT-06
-- [ ] `tests/phase3/test_chat_routing.py` — integration stubs for routing flow
+- [ ] `tests/phase3/conftest.py` -- shared fixtures (mock Ollama embed, skill YAML fixtures)
+- [ ] `tests/phase3/test_tool_registry.py` -- stubs for AGNT-04, AGNT-05
+- [ ] `tests/phase3/test_skill_registry.py` -- stubs for AGNT-01, AGNT-02
+- [ ] `tests/phase3/test_matcher.py` -- stubs for AGNT-03, AGNT-06 (autonomy routing)
+- [ ] `tests/phase3/test_executor.py` -- stubs for skill execution
+- [ ] `tests/phase3/test_chat_router.py` -- integration stubs for routing flow, AGNT-06 (confirm-first flow)
 
 ---
 
