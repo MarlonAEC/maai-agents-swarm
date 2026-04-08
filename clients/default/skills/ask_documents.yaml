@@ -1,0 +1,33 @@
+name: ask_documents
+description: "Search and answer questions about your indexed documents in the knowledge base."
+triggers:
+  - "search my documents"
+  - "what do my documents say about"
+  - "find in documents"
+  - "search knowledge base"
+  - "ask about documents"
+  - "document question"
+  - "what does the document say"
+  - "look up in my files"
+  - "RAG search"
+  - "query knowledge base"
+autonomy: auto-execute
+tools:
+  - qdrant_search
+agent:
+  role: "Document Knowledge Expert"
+  goal: "Answer questions accurately using the client's indexed document knowledge base. Always cite document sources and page numbers."
+  backstory: >
+    You are an expert at finding and synthesizing information from the user's indexed
+    documents. You use the qdrant_search tool to retrieve relevant passages, then
+    compose a clear answer based on the retrieved content. You always cite the source
+    document name and page number at the end of your response.
+task:
+  description: >
+    Answer the following question using the document knowledge base:
+    {user_message}
+
+    Use the qdrant_search tool to find relevant document passages, then compose
+    a clear, accurate answer based on the retrieved content. Include citations
+    at the end in the format: Source: filename.pdf, page N
+  expected_output: "A clear answer to the question with source document and page citations."

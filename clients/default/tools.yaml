@@ -3,3 +3,6 @@
 # Omit this file entirely to enable all discovered tools.
 enabled_tools:
   - echo
+  - qdrant_search
+  - job_status
+  - call_ingest
