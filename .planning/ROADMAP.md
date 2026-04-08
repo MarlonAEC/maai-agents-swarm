@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. LiteLLM proxy routes a test request to Qwen3 14B and a separate request to Gemma 3 4B correctly
   4. GPU acceleration is confirmed active (Ollama logs show GPU device, not CPU fallback)
   5. Per-client config folder is mounted and loaded — changing a value in client.env is reflected at startup
-**Plans:** 1/2 plans executed
+**Plans:** 2 plans
 
 Plans:
 - [x] 01-01-PLAN.md — Docker Compose stack, client config, LiteLLM proxy config, test scaffold
@@ -47,8 +47,12 @@ Plans:
   3. User can upload a file in chat and the system acknowledges it for processing
   4. Multi-turn context is maintained — a follow-up question in the same session can reference prior messages
   5. Agent inference does not silently drop tool calls (smoke test confirms stream=False path works end-to-end)
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Core API service (FastAPI + CrewAI freeform agent + Dockerfile)
+- [ ] 02-02-PLAN.md — Pipelines pipe plugin (Open WebUI -> Core API bridge)
+- [ ] 02-03-PLAN.md — Docker Compose wiring, test scaffold, and end-to-end verification
 
 ### Phase 3: Tool System and Skills
 **Goal**: YAML-defined skills are triggerable by name or natural language, tools load from a plugin registry, and per-client tool enable/disable works without code changes
@@ -106,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 1/2 | In Progress|  |
-| 2. Core API and End-to-End Chat | 0/TBD | Not started | - |
+| 2. Core API and End-to-End Chat | 0/3 | Not started | - |
 | 3. Tool System and Skills | 0/TBD | Not started | - |
 | 4. Document Ingestion and RAG | 0/TBD | Not started | - |
 | 5. Business Plugins | 0/TBD | Not started | - |
