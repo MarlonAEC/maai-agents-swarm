@@ -203,7 +203,7 @@ ${DOCKER} compose --profile "${PROFILE}" up -d ollama-gpu ollama-cpu 2>/dev/null
 
 log_info "Waiting for Ollama to be ready (timeout: ${OLLAMA_READY_TIMEOUT}s)..."
 ELAPSED=0
-until wget -qO- http://localhost:11434/api/tags &>/dev/null 2>&1; do
+until ${DOCKER} exec ollama ollama list &>/dev/null 2>&1; do
   if [[ ${ELAPSED} -ge ${OLLAMA_READY_TIMEOUT} ]]; then
     log_error "Timed out waiting for Ollama after ${OLLAMA_READY_TIMEOUT}s."
     log_error "Check container logs: ${DOCKER} compose --profile ${PROFILE} logs ollama-gpu ollama-cpu"
