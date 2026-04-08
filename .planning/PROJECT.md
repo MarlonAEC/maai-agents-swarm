@@ -15,19 +15,18 @@ Clients can describe what they need in natural language and the system executes 
 - [x] Open WebUI chat interface backed by local Ollama models — Validated in Phase 2: Core API and End-to-End Chat
 - [x] Freeform chat capability (handle requests not covered by pre-configured skills) — Validated in Phase 2: Core API and End-to-End Chat
 - [x] Docker Compose deployment (single `docker compose up` per client) — Validated in Phase 1+2: full stack runs with one command
+- [x] Config-driven agent system (YAML-defined agents, tools, prompts — like Claude skills) — Validated in Phase 3: Tool System and Skills
+- [x] Plugin-based tool system (enable/disable tools per client via config) — Validated in Phase 3: Tool System and Skills
+- [x] Configurable autonomy (per-workflow: auto-execute vs confirm-first) — Validated in Phase 3: Tool System and Skills
+- [x] Per-client config folder (agents.yaml, workflows.yaml, prompts/, client.env) — Validated in Phase 3: Tool System and Skills
 
 ### Active
-
-- [ ] Config-driven agent system (YAML-defined agents, tools, prompts — like Claude skills)
-- [ ] Plugin-based tool system (enable/disable tools per client via config)
 - [ ] File classification and organization (scan local folders, classify by type/year/category)
 - [ ] PDF summarization and data extraction
 - [ ] Email integration (IMAP/Gmail/O365 — connect, search, summarize)
 - [ ] Spreadsheet generation from extracted document data
 - [ ] NotebookLM MCP integration for presentation material generation
 - [ ] RAG knowledge base per client (documents indexed for Q&A)
-- [ ] Configurable autonomy (per-workflow: auto-execute vs confirm-first)
-- [ ] Per-client config folder (agents.yaml, workflows.yaml, prompts/, client.env)
 - [ ] Local folder watching (monitor directories for new files to process)
 
 ### Out of Scope
@@ -92,4 +91,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after initialization*
+*Last updated: 2026-04-08 after Phase 3 completion*
