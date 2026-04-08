@@ -1,15 +1,14 @@
 """
-MAAI Agent Pipeline — Pipe plugin for Open WebUI.
+MAAI Agent Pipeline — Manifold pipe plugin for Open WebUI.
 
 Routes all chat messages through the Core API's CrewAI freeform agent.
-Appears as "MAAI Agent" in the Open WebUI model dropdown.
+Appears as "MAAI Agent: Chat" in the Open WebUI model dropdown.
 """
 from typing import Optional, Union, Generator, Iterator
 from pydantic import BaseModel, Field
 import httpx
 import os
 import logging
-import json
 import time
 
 # Logger setup (Pipelines server runs this file directly, not as a package)
@@ -22,7 +21,7 @@ if not logger.handlers:
 
 
 class Pipeline:
-    """MAAI Agent pipe — forwards messages to Core API and returns agent response."""
+    """MAAI Agent manifold pipe — forwards messages to Core API and returns agent response."""
 
     class Valves(BaseModel):
         """Configurable settings exposed in Open WebUI admin UI."""
@@ -36,10 +35,15 @@ class Pipeline:
         )
 
     def __init__(self):
-        self.name = "MAAI Agent"
-        self.type = "pipe"  # CRITICAL: pipe type, NOT filter — per D-01
+        self.name = "MAAI Agent: "
+        self.type = "manifold"  # manifold type exposes pipelines[] as selectable models in Open WebUI
         self.valves = self.Valves()
-        logger.info("MAAI Agent pipeline initialized (type=pipe)")
+        # Pipelines server reads this list to register models on /models endpoint
+        # Name format: pipeline.name is prepended, so keep sub-name descriptive
+        self.pipelines = [
+            {"id": "chat", "name": "Chat"},
+        ]
+        logger.info("MAAI Agent pipeline initialized (type=manifold)")
 
     async def on_startup(self):
         """Called when Pipelines server starts."""
@@ -49,49 +53,31 @@ class Pipeline:
         """Called when Pipelines server shuts down."""
         logger.info("MAAI Agent pipeline shutting down")
 
-    async def pipe(
+    def pipe(
         self,
         user_message: str,
         model_id: str,
         messages: list,
         body: dict,
-        __event_emitter__=None,
     ) -> str:
         """
-        Main pipe handler — called for every chat message.
+        Main pipe handler — called synchronously by the Pipelines server
+        for every chat message routed to this manifold.
 
-        Per D-02: ALL messages route through here to Core API.
-        Per D-06: Full message history is forwarded.
-        Per D-03: Intermediate status messages sent via __event_emitter__.
-        Per D-14/D-16: File uploads are saved and acknowledged, not processed.
+        Forwards the full message history to Core API's /chat endpoint.
         """
         logger.info(f"Pipe called: user_message length={len(user_message)}, messages={len(messages)}")
 
-        # --- D-03: Emit "Thinking..." status ---
-        if __event_emitter__:
-            await __event_emitter__({
-                "type": "status",
-                "data": {
-                    "status": "in_progress",
-                    "description": "Thinking...",
-                    "done": False,
-                },
-            })
-
-        # --- D-14: Handle file uploads ---
-        # Open WebUI sends files in the body dict
+        # --- Handle file uploads ---
         files_info = body.get("files", [])
         file_acknowledgments = []
         if files_info:
             upload_dir = "/app/uploads"
             os.makedirs(upload_dir, exist_ok=True)
             for file_entry in files_info:
-                # Open WebUI Pipelines provides file info in various formats
-                # depending on version — handle the common structures
                 filename = "unknown"
                 if isinstance(file_entry, dict):
                     filename = file_entry.get("filename", file_entry.get("name", "unknown"))
-                    # If file data is present, save it
                     file_data = file_entry.get("data", file_entry.get("content"))
                     if file_data and filename != "unknown":
                         filepath = os.path.join(upload_dir, f"{int(time.time())}_{filename}")
@@ -108,17 +94,7 @@ class Pipeline:
                             logger.error(f"Failed to save file {filename}: {e}")
                 file_acknowledgments.append(filename)
 
-            if __event_emitter__:
-                await __event_emitter__({
-                    "type": "status",
-                    "data": {
-                        "status": "in_progress",
-                        "description": f"File(s) received: {', '.join(file_acknowledgments)}",
-                        "done": False,
-                    },
-                })
-
-        # --- D-02, D-06: Forward full message history to Core API ---
+        # --- Forward full message history to Core API ---
         payload = {
             "messages": [
                 {"role": m.get("role", "user"), "content": m.get("content", "")}
@@ -128,18 +104,8 @@ class Pipeline:
         }
 
         try:
-            if __event_emitter__:
-                await __event_emitter__({
-                    "type": "status",
-                    "data": {
-                        "status": "in_progress",
-                        "description": "Processing your request...",
-                        "done": False,
-                    },
-                })
-
-            async with httpx.AsyncClient(timeout=self.valves.REQUEST_TIMEOUT) as client:
-                response = await client.post(
+            with httpx.Client(timeout=self.valves.REQUEST_TIMEOUT) as client:
+                response = client.post(
                     f"{self.valves.CORE_API_URL}/chat",
                     json=payload,
                 )
@@ -159,20 +125,9 @@ class Pipeline:
             logger.error(f"Unexpected error calling Core API: {e}")
             agent_response = "I'm sorry, I encountered an unexpected error. Please try again."
 
-        # --- D-14/D-16: Append file acknowledgment if files were uploaded ---
+        # --- Append file acknowledgment if files were uploaded ---
         if file_acknowledgments:
             file_list = ", ".join(file_acknowledgments)
             agent_response += f"\n\n---\n**File received:** {file_list}. Document processing will be available in a future update."
-
-        # --- D-03: Emit completion status ---
-        if __event_emitter__:
-            await __event_emitter__({
-                "type": "status",
-                "data": {
-                    "status": "complete",
-                    "description": "Done",
-                    "done": True,
-                },
-            })
 
         return agent_response

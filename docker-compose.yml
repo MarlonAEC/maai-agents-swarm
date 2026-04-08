@@ -92,7 +92,8 @@ services:
       - ENABLE_OLLAMA_API=false
       - ENABLE_OPENAI_API=true
       - OPENAI_API_BASE_URLS=http://litellm:4000/v1;http://pipelines:9099
-      - OPENAI_API_KEYS=${LITELLM_MASTER_KEY};${PIPELINES_API_KEY}
+      # Keys must match OPENAI_API_BASE_URLS order: LiteLLM;Pipelines
+      # Loaded from env_file (client.env) — do NOT interpolate with ${} here
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
       - WEBUI_AUTH=true
       - PORT=8080
@@ -145,13 +146,15 @@ services:
   pipelines:
     container_name: pipelines
     image: ghcr.io/open-webui/pipelines:main
+    env_file:
+      - ${CLIENT_ENV_PATH:-clients/default/client.env}
     environment:
       - PIPELINES_API_KEY=${PIPELINES_API_KEY:-0p3n-w3bu!}
     volumes:
       - ./src/pipelines:/app/pipelines    # Mount plugin files directly — per D-13
       - maai-uploads:/app/uploads          # Shared upload volume — per D-15
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9099/health')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9099/')\""]
       interval: 15s
       timeout: 5s
       retries: 3
