@@ -12,12 +12,13 @@ Clients can describe what they need in natural language and the system executes 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Open WebUI chat interface backed by local Ollama models — Validated in Phase 2: Core API and End-to-End Chat
+- [x] Freeform chat capability (handle requests not covered by pre-configured skills) — Validated in Phase 2: Core API and End-to-End Chat
+- [x] Docker Compose deployment (single `docker compose up` per client) — Validated in Phase 1+2: full stack runs with one command
 
 ### Active
 
 - [ ] Config-driven agent system (YAML-defined agents, tools, prompts — like Claude skills)
-- [ ] Open WebUI chat interface backed by local Ollama models
 - [ ] Plugin-based tool system (enable/disable tools per client via config)
 - [ ] File classification and organization (scan local folders, classify by type/year/category)
 - [ ] PDF summarization and data extraction
@@ -26,9 +27,7 @@ Clients can describe what they need in natural language and the system executes 
 - [ ] NotebookLM MCP integration for presentation material generation
 - [ ] RAG knowledge base per client (documents indexed for Q&A)
 - [ ] Configurable autonomy (per-workflow: auto-execute vs confirm-first)
-- [ ] Docker Compose deployment (single `docker compose up` per client)
 - [ ] Per-client config folder (agents.yaml, workflows.yaml, prompts/, client.env)
-- [ ] Freeform chat capability (handle requests not covered by pre-configured skills)
 - [ ] Local folder watching (monitor directories for new files to process)
 
 ### Out of Scope
