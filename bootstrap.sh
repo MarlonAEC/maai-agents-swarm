@@ -194,6 +194,19 @@ else
   log_warn "Could not determine LiteLLM version. Proceeding — verify manually that image is >=1.83.0."
 fi
 
+# ── Step 7b: Sync host-level vars to .env for Docker Compose ─────────────────
+# Docker Compose resolves ${VAR} in port mappings and environment from .env at
+# the project root, NOT from env_file (which is container-only). Write the
+# variables Compose needs for host-side resolution.
+DOT_ENV="${SCRIPT_DIR}/.env"
+cat > "${DOT_ENV}" <<EOF
+CLIENT_ENV_PATH=${ENV_FILE}
+WEBUI_PORT=${WEBUI_PORT:-3000}
+LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+EOF
+log_info "Synced host variables to .env for Docker Compose"
+
 # ── Step 8: Start Ollama and wait for ready ───────────────────────────────────
 # Detect if a local Ollama is already using port 11434 — use alternate port if so
 OLLAMA_PORT="${OLLAMA_PORT:-11434}"
@@ -204,6 +217,7 @@ if netstat -ano 2>/dev/null | grep -q ":${OLLAMA_PORT}.*LISTENING" || \
   log_warn "Internal service communication is unaffected (uses Docker network)."
 fi
 export OLLAMA_PORT
+echo "OLLAMA_PORT=${OLLAMA_PORT}" >> "${DOT_ENV}"
 
 log_info "Starting Ollama (${PROFILE} profile)..."
 
