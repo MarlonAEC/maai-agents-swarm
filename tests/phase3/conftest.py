@@ -28,8 +28,9 @@ def _inject_crewai_stub() -> None:
 
     This allows Phase 3 tests to run in environments where crewai is not
     installed (e.g., dev machines running Python 3.14). The stub provides
-    just enough surface area for tool registry tests to work:
+    just enough surface area for tool registry and executor tests to work:
       - BaseTool base class with name, description, args_schema, and _run
+      - Agent, Task, Crew, LLM, Process stubs for executor imports
       - Correct subclassing behaviour so issubclass() checks pass
       - Class-level attribute access for name/description (mirrors real crewai)
 
@@ -48,14 +49,75 @@ def _inject_crewai_stub() -> None:
         def _run(self, **kwargs) -> str:  # noqa: D401
             raise NotImplementedError
 
+    class Agent:
+        """Minimal Agent stub for executor tests."""
+
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    class Task:
+        """Minimal Task stub for executor tests."""
+
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    class Process:
+        """Minimal Process stub."""
+
+        sequential = "sequential"
+
+    class Crew:
+        """Minimal Crew stub for executor tests."""
+
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+        def kickoff(self, inputs=None):
+            result = types.SimpleNamespace()
+            result.raw = "stub result"
+            return result
+
+    class LLM:
+        """Minimal LLM stub for executor tests."""
+
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    # Stub decorators for crewai.project
+    def _identity_decorator(fn):
+        """Identity decorator stub for @agent, @task, @crew."""
+        return fn
+
+    def _crewbase_decorator(cls):
+        """Identity decorator stub for @CrewBase."""
+        return cls
+
     # Build the crewai package hierarchy in sys.modules
     crewai_pkg = types.ModuleType("crewai")
     crewai_tools_pkg = types.ModuleType("crewai.tools")
+    crewai_project_pkg = types.ModuleType("crewai.project")
+
     crewai_tools_pkg.BaseTool = BaseTool  # type: ignore[attr-defined]
     crewai_pkg.tools = crewai_tools_pkg  # type: ignore[attr-defined]
+    crewai_pkg.Agent = Agent  # type: ignore[attr-defined]
+    crewai_pkg.Task = Task  # type: ignore[attr-defined]
+    crewai_pkg.Crew = Crew  # type: ignore[attr-defined]
+    crewai_pkg.LLM = LLM  # type: ignore[attr-defined]
+    crewai_pkg.Process = Process  # type: ignore[attr-defined]
+
+    crewai_project_pkg.CrewBase = _crewbase_decorator  # type: ignore[attr-defined]
+    crewai_project_pkg.agent = _identity_decorator  # type: ignore[attr-defined]
+    crewai_project_pkg.task = _identity_decorator  # type: ignore[attr-defined]
+    crewai_project_pkg.crew = _identity_decorator  # type: ignore[attr-defined]
+    crewai_pkg.project = crewai_project_pkg  # type: ignore[attr-defined]
 
     sys.modules.setdefault("crewai", crewai_pkg)
     sys.modules.setdefault("crewai.tools", crewai_tools_pkg)
+    sys.modules.setdefault("crewai.project", crewai_project_pkg)
 
 
 try:
