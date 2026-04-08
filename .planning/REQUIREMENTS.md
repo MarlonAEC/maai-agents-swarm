@@ -27,12 +27,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Agent System
 
-- [ ] **AGNT-01**: Agents, tasks, and tool assignments defined in YAML config files
-- [ ] **AGNT-02**: Pre-configured "skills" (named tasks) triggered by name or natural language match
-- [ ] **AGNT-03**: Skill Matcher routes user requests to the best matching skill or freeform fallback
-- [ ] **AGNT-04**: Plugin-based tool system — tools enabled/disabled per client via YAML config
-- [ ] **AGNT-05**: Tool registry discovers and loads available plugins at startup
-- [ ] **AGNT-06**: Per-workflow autonomy control (auto-execute vs confirm-first) configurable in YAML
+- [x] **AGNT-01**: Agents, tasks, and tool assignments defined in YAML config files
+- [x] **AGNT-02**: Pre-configured "skills" (named tasks) triggered by name or natural language match
+- [x] **AGNT-03**: Skill Matcher routes user requests to the best matching skill or freeform fallback
+- [x] **AGNT-04**: Plugin-based tool system — tools enabled/disabled per client via YAML config
+- [x] **AGNT-05**: Tool registry discovers and loads available plugins at startup
+- [x] **AGNT-06**: Per-workflow autonomy control (auto-execute vs confirm-first) configurable in YAML
 - [x] **AGNT-07**: CrewAI embedder explicitly configured for Ollama (not defaulting to OpenAI)
 - [x] **AGNT-08**: Agent inference uses non-streaming mode to prevent tool call drops
 - [x] **AGNT-09**: max_iter and max_execution_time caps on all agent loops to prevent runaway inference
@@ -116,12 +116,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-04 | Phase 2 | Complete |
 | CHAT-05 | Phase 2 | Complete |
 | CHAT-06 | Phase 2 | Complete |
-| AGNT-01 | Phase 3 | Pending |
-| AGNT-02 | Phase 3 | Pending |
-| AGNT-03 | Phase 3 | Pending |
-| AGNT-04 | Phase 3 | Pending |
-| AGNT-05 | Phase 3 | Pending |
-| AGNT-06 | Phase 3 | Pending |
+| AGNT-01 | Phase 3 | Complete |
+| AGNT-02 | Phase 3 | Complete |
+| AGNT-03 | Phase 3 | Complete |
+| AGNT-04 | Phase 3 | Complete |
+| AGNT-05 | Phase 3 | Complete |
+| AGNT-06 | Phase 3 | Complete |
 | AGNT-07 | Phase 2 | Complete |
 | AGNT-08 | Phase 2 | Complete |
 | AGNT-09 | Phase 2 | Complete |

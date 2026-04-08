@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 3 context gathered
-last_updated: "2026-04-08T16:14:44.029Z"
+status: Ready to execute
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-04-08T17:06:04.112Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Clients can describe what they need in natural language and the system executes it using local AI — no cloud dependencies, no data leaving their machine.
-**Current focus:** Phase 02 — core-api-and-end-to-end-chat
+**Current focus:** Phase 03 — tool-system-and-skills
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (tool-system-and-skills) — EXECUTING
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -51,6 +51,9 @@ Plan: Not started
 | Phase 02-core-api-and-end-to-end-chat P02 | 2 | 1 tasks | 1 files |
 | Phase 02-core-api-and-end-to-end-chat P01 | 2 | 2 tasks | 10 files |
 | Phase 02-core-api-and-end-to-end-chat P03 | 225 | 2 tasks | 11 files |
+| Phase 03-tool-system-and-skills P01 | 150 | 2 tasks | 6 files |
+| Phase 03-tool-system-and-skills P03 | 138 | 2 tasks | 3 files |
+| Phase 03-tool-system-and-skills P02 | 5 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -74,6 +77,14 @@ Recent decisions affecting current work:
 - [Phase 02-core-api-and-end-to-end-chat]: openai/reasoning-model LiteLLM alias used for LLM inference; Ollama embedder points directly to http://ollama:11434/api/embeddings; stream=False + max_iter=5 + max_execution_time=60 guardrails; run_in_executor for async safety
 - [Phase 02-core-api-and-end-to-end-chat]: OPENAI_API_BASE_URLS and OPENAI_API_KEYS must have same semicolon-separated entry count — mismatch causes silent routing failures in Open WebUI
 - [Phase 02-core-api-and-end-to-end-chat]: maai-uploads is a named Docker volume shared between core-api and pipelines — persists across restarts, accessible by both containers
+- [Phase 03-tool-system-and-skills]: Use Ollama /api/embed batch endpoint (not /api/embeddings) for skill indexing — correct endpoint per Research Pitfall 6
+- [Phase 03-tool-system-and-skills]: L2-normalise skill embeddings at build time so dot product == cosine similarity in matcher — avoids redundant normalisation per query
+- [Phase 03-tool-system-and-skills]: Warmup embedding model in initialize() to prevent first-match timeout (Research Pitfall 2)
+- [Phase 03-tool-system-and-skills]: Direct Agent/Task/Crew constructors for skill executor — @CrewBase cannot load arbitrary runtime YAML paths
+- [Phase 03-tool-system-and-skills]: asyncio.get_running_loop() replaces deprecated get_event_loop() in chat handler
+- [Phase 03-tool-system-and-skills]: Skill name embedded in bold in confirmation message enables stateless confirm-first without server sessions
+- [Phase 03-tool-system-and-skills]: crewai stub injected in conftest.py (not pytest.importorskip) so Phase 3 tests run in any Python version without crewai installed
+- [Phase 03-tool-system-and-skills]: Plain class crewai stub (not Pydantic BaseModel) so EchoTool.name accessible at class level matching real crewai behaviour
 
 ### Pending Todos
 
@@ -86,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T16:14:44.026Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-tool-system-and-skills/03-CONTEXT.md
+Last session: 2026-04-08T17:06:04.109Z
+Stopped at: Completed 03-02-PLAN.md
+Resume file: None
