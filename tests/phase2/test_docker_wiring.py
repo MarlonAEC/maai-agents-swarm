@@ -153,23 +153,30 @@ def test_open_webui_api_keys_count_matches_urls(compose_config):
     semicolon-separated entries. A mismatch causes silent routing failures.
     (Pitfall 2 from Phase 2 research.)
     """
+    # OPENAI_API_BASE_URLS is in the environment block
     env_list = compose_config["services"]["open-webui"].get("environment", [])
     base_urls_str = ""
-    api_keys_str = ""
     for e in env_list:
-        if isinstance(e, str):
-            if e.startswith("OPENAI_API_BASE_URLS="):
-                base_urls_str = e.split("=", 1)[1]
-            elif e.startswith("OPENAI_API_KEYS="):
-                api_keys_str = e.split("=", 1)[1]
-        elif isinstance(e, dict):
-            if "OPENAI_API_BASE_URLS" in e:
-                base_urls_str = e["OPENAI_API_BASE_URLS"]
-            if "OPENAI_API_KEYS" in e:
-                api_keys_str = e["OPENAI_API_KEYS"]
+        if isinstance(e, str) and e.startswith("OPENAI_API_BASE_URLS="):
+            base_urls_str = e.split("=", 1)[1]
+        elif isinstance(e, dict) and "OPENAI_API_BASE_URLS" in e:
+            base_urls_str = e["OPENAI_API_BASE_URLS"]
 
     assert base_urls_str, "OPENAI_API_BASE_URLS not found in open-webui environment"
-    assert api_keys_str, "OPENAI_API_KEYS not found in open-webui environment"
+
+    # OPENAI_API_KEYS is loaded from env_file (client.env) to avoid Docker Compose
+    # host-interpolation issues — verify it exists in client.env instead
+    client_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                   "clients", "default", "client.env")
+    api_keys_str = ""
+    if os.path.exists(client_env_path):
+        with open(client_env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("OPENAI_API_KEYS="):
+                    api_keys_str = line.split("=", 1)[1]
+
+    assert api_keys_str, "OPENAI_API_KEYS not found in client.env"
 
     url_count = len(base_urls_str.split(";"))
     key_count = len(api_keys_str.split(";"))

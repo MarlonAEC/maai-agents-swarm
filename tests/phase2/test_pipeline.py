@@ -26,29 +26,30 @@ def test_pipeline_file_exists():
     assert os.path.exists(PIPE_FILE), f"Missing pipeline file: {PIPE_FILE}"
 
 
-def test_pipeline_is_pipe_type():
+def test_pipeline_is_manifold_type():
     """
-    Plugin must set self.type = 'pipe' (NOT 'filter').
+    Plugin must set self.type = 'manifold' to appear as a selectable model.
 
-    A pipe-type plugin appears as a selectable model in the Open WebUI
-    dropdown. A filter would forward to LiteLLM instead — wrong for this
-    use case (per D-01).
+    The Pipelines server only registers manifold-type plugins on the /models
+    endpoint. A 'pipe' type is not listed; a 'filter' would intercept other
+    models instead of appearing as its own model.
     """
     content = _pipe_content()
-    assert 'self.type = "pipe"' in content or "self.type = 'pipe'" in content, (
-        "maai_pipe.py does not set self.type = 'pipe' — "
-        "must be pipe type, not filter, to appear as selectable model"
+    assert 'self.type = "manifold"' in content or "self.type = 'manifold'" in content, (
+        "maai_pipe.py does not set self.type = 'manifold' — "
+        "must be manifold type to appear as selectable model in Open WebUI"
     )
 
 
-def test_pipeline_has_event_emitter():
+def test_pipeline_has_pipelines_list():
     """
-    Plugin must accept and use __event_emitter__ for intermediate status events.
-    Required for 'Thinking...', 'Processing...', 'Done' status feedback (D-03).
+    Manifold plugins must define self.pipelines list for model registration.
+    The Pipelines server reads this list to expose models on /models endpoint.
     """
     content = _pipe_content()
-    assert "__event_emitter__" in content, (
-        "maai_pipe.py does not use __event_emitter__ for status events"
+    assert "self.pipelines" in content, (
+        "maai_pipe.py does not define self.pipelines list — "
+        "manifold type requires this for model registration"
     )
 
 
