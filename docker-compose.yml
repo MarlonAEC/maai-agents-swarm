@@ -7,6 +7,7 @@ networks:
 volumes:
   ollama-models:
   webui-data:
+  maai-uploads:    # Shared between pipelines (write) and core-api (read) — per D-15
 
 services:
 
@@ -90,8 +91,8 @@ services:
     environment:
       - ENABLE_OLLAMA_API=false
       - ENABLE_OPENAI_API=true
-      - OPENAI_API_BASE_URLS=http://litellm:4000/v1
-      - OPENAI_API_KEYS=${LITELLM_MASTER_KEY}
+      - OPENAI_API_BASE_URLS=http://litellm:4000/v1;http://pipelines:9099
+      - OPENAI_API_KEYS=${LITELLM_MASTER_KEY};${PIPELINES_API_KEY}
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
       - WEBUI_AUTH=true
       - PORT=8080
@@ -105,6 +106,56 @@ services:
     depends_on:
       litellm:
         condition: service_healthy
+      pipelines:
+        condition: service_healthy
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # -- Core API (FastAPI + CrewAI) -----------------------------------------------
+  core-api:
+    container_name: core-api
+    build:
+      context: ./src/core_api
+      dockerfile: Dockerfile
+    env_file:
+      - ${CLIENT_ENV_PATH:-clients/default/client.env}
+    environment:
+      - LITELLM_BASE_URL=http://litellm:4000/v1
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-maai-local}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+    volumes:
+      - maai-uploads:/app/uploads
+    ports:
+      - "${CORE_API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      litellm:
+        condition: service_healthy
+    networks:
+      - maai-net
+    restart: unless-stopped
+
+  # -- Pipelines (Open WebUI plugin server) --------------------------------------
+  pipelines:
+    container_name: pipelines
+    image: ghcr.io/open-webui/pipelines:main
+    environment:
+      - PIPELINES_API_KEY=${PIPELINES_API_KEY:-0p3n-w3bu!}
+    volumes:
+      - ./src/pipelines:/app/pipelines    # Mount plugin files directly — per D-13
+      - maai-uploads:/app/uploads          # Shared upload volume — per D-15
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9099/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       - maai-net
     restart: unless-stopped
