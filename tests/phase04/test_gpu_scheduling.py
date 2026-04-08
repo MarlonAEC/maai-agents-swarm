@@ -82,3 +82,52 @@ async def test_gpu_lock_serializes_workloads():
     assert call_kwargs.get("px") == GPU_LOCK_TTL_MS
     # TTL must be substantial (>= 60 seconds = 60000 ms) to cover slow OCR
     assert GPU_LOCK_TTL_MS >= 60_000
+
+
+def test_worker_max_jobs_is_one():
+    """WorkerSettings.max_jobs == 1 — documents process one at a time for GPU sequencing.
+
+    Per D-10 and D-12: the ARQ worker must never process two documents simultaneously
+    because OCR is GPU-bound and concurrent GPU workloads cause OOM errors.
+    """
+    from workers.ingest_worker import WorkerSettings
+
+    assert WorkerSettings.max_jobs == 1, (
+        "max_jobs must be 1 to prevent concurrent GPU workloads (D-12)"
+    )
+
+
+@pytest.mark.asyncio
+async def test_worker_releases_lock_on_docproc_error():
+    """GPU lock is released in a finally block even if the docproc HTTP call raises.
+
+    Per D-12: the GPU lock MUST always be released. If docproc crashes and
+    release_gpu_lock is not called, the GPU is deadlocked for up to GPU_LOCK_TTL_MS.
+    """
+    mock_redis = AsyncMock()
+    mock_http_client = AsyncMock()
+
+    # Simulate docproc raising a connection error
+    mock_http_client.post = AsyncMock(side_effect=Exception("Connection refused"))
+
+    ctx = {"redis": mock_redis, "http_client": mock_http_client}
+
+    with (
+        patch("workers.ingest_worker.acquire_gpu_lock", AsyncMock(return_value=True)) as mock_acquire,
+        patch("workers.ingest_worker.release_gpu_lock", AsyncMock()) as mock_release,
+    ):
+        from workers.ingest_worker import process_document
+
+        result = await process_document(
+            ctx,
+            file_path="/app/uploads/doc.pdf",
+            client_id="test_client",
+            file_name="doc.pdf",
+        )
+
+    # Lock must be released even though docproc raised
+    mock_release.assert_called_once_with(mock_redis)
+
+    # Job result must indicate failure
+    assert result["status"] == "error"
+    assert "docproc" in result["detail"].lower() or "connection" in result["detail"].lower()

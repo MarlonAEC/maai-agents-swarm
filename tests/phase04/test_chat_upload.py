@@ -98,3 +98,65 @@ def test_ingest_skill_triggers_arq():
 
     source = inspect.getsource(CallIngestTool._run)
     assert "/ingest" in source, "CallIngestTool._run must reference /ingest endpoint"
+
+
+def test_call_ingest_tool_posts_to_ingest():
+    """CallIngestTool makes a POST request to the /ingest URL."""
+    from tools.call_ingest_tool import CallIngestTool
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"job_id": "abc-123", "status": "queued"}
+    mock_response.raise_for_status = MagicMock()
+
+    mock_client_instance = MagicMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
+    mock_client_instance.__exit__ = MagicMock(return_value=False)
+
+    with patch("tools.call_ingest_tool.httpx.Client", return_value=mock_client_instance):
+        tool = CallIngestTool()
+        result = tool._run(file_name="report.pdf")
+
+    # Verify a POST was made containing /ingest in the URL
+    assert mock_client_instance.post.called
+    call_args = mock_client_instance.post.call_args
+    url = call_args.args[0] if call_args.args else call_args.kwargs.get("url", "")
+    assert "/ingest" in url, f"Expected /ingest in URL but got: {url}"
+
+    # Result should include the job ID
+    assert "abc-123" in result
+
+
+def test_ingest_endpoint_rejects_unsupported_ext():
+    """POST /ingest with a .docx file returns 400 (unsupported file type)."""
+    import sys
+
+    core_api_dir = str(
+        Path(__file__).resolve().parent.parent.parent / "src" / "core_api"
+    )
+    if core_api_dir not in sys.path:
+        sys.path.insert(0, core_api_dir)
+
+    from fastapi.testclient import TestClient
+    from fastapi import FastAPI
+
+    mock_create_pool = AsyncMock()
+
+    with (
+        patch("routers.ingest.create_pool", mock_create_pool),
+        patch("routers.ingest.Path.exists", return_value=True),
+    ):
+        from routers.ingest import router
+
+        test_app = FastAPI()
+        test_app.include_router(router)
+        client = TestClient(test_app)
+
+        response = client.post(
+            "/ingest",
+            json={"file_name": "spreadsheet.docx", "client_id": "test_client"},
+        )
+
+    assert response.status_code == 400
+    # Redis pool must NOT have been called (validation should fail before queueing)
+    mock_create_pool.assert_not_called()
