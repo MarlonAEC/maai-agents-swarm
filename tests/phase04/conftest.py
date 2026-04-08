@@ -126,6 +126,26 @@ for mod_name in [
 
 
 @pytest.fixture
+def docproc_main():
+    """Import src/docproc/main.py unambiguously.
+
+    Both src/core_api and src/docproc contain main.py. When the full test suite
+    runs, phase3's conftest puts core_api on sys.path first, so a bare
+    ``import main`` resolves to the wrong module. This fixture uses
+    importlib to load the docproc main by absolute file path.
+    """
+    import importlib.util
+
+    docproc_main_path = str(
+        Path(__file__).resolve().parent.parent.parent / "src" / "docproc" / "main.py"
+    )
+    spec = importlib.util.spec_from_file_location("docproc_main", docproc_main_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.fixture
 def sample_pages():
     """Sample docproc response pages for testing."""
     return [

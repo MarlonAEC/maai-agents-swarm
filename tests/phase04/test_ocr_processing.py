@@ -84,13 +84,12 @@ def test_easyocr_options_configured():
     )
 
 
-def test_scanned_pdf_ocr_enabled(tmp_path):
+def test_scanned_pdf_ocr_enabled(tmp_path, docproc_main):
     """POST /process with ocr_enabled=True uses the OCR converter (converter_ocr).
 
     Verifies that when ocr_enabled=True, the app selects converter_ocr over
     converter_text, ensuring scanned PDFs go through the EasyOCR pipeline.
     """
-    import main as docproc_main
     from fastapi.testclient import TestClient
 
     pdf_file = tmp_path / "scanned.pdf"
@@ -129,13 +128,12 @@ def test_scanned_pdf_ocr_enabled(tmp_path):
     mock_text_converter.convert.assert_not_called()
 
 
-def test_ocr_disabled_uses_text_converter(tmp_path):
+def test_ocr_disabled_uses_text_converter(tmp_path, docproc_main):
     """POST /process with ocr_enabled=False routes to the text-only converter (converter_text).
 
     Verifies that digital-native PDFs skip the EasyOCR pipeline entirely,
     avoiding unnecessary GPU workload on documents that don't need OCR.
     """
-    import main as docproc_main
     from fastapi.testclient import TestClient
 
     pdf_file = tmp_path / "digital.pdf"

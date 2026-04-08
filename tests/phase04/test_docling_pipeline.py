@@ -45,7 +45,7 @@ def _make_mock_convert_result(*elements):
 
 
 @pytest.fixture
-def app_client(tmp_path):
+def app_client(tmp_path, docproc_main):
     """FastAPI TestClient for the docproc app.
 
     Patches DocumentConverter and easyocr.Reader at import level so the
@@ -53,8 +53,6 @@ def app_client(tmp_path):
     still gets populated with real (stubbed) converter objects.
     """
     from fastapi.testclient import TestClient
-
-    import main as docproc_main
 
     # Patch easyocr.Reader to avoid model download during lifespan pre-warm
     mock_reader_cls = MagicMock()
@@ -80,14 +78,12 @@ def test_health_endpoint(app_client):
     assert data["status"] == "ok"
 
 
-def test_text_pdf_extraction(tmp_path, app_client):
+def test_text_pdf_extraction(tmp_path, app_client, docproc_main):
     """POST /process extracts text from a text PDF using the text converter."""
     pdf_file = tmp_path / "sample.pdf"
     pdf_file.write_bytes(b"%PDF-1.4 mock")
 
     # Set up the stubbed converter_text on app.state to return a real-looking result
-    import main as docproc_main
-
     elem1 = _make_text_element("Hello from page one.", page_no=1)
     elem2 = _make_text_element("Content on page two.", page_no=2)
     mock_result = _make_mock_convert_result(elem1, elem2)
@@ -107,12 +103,10 @@ def test_text_pdf_extraction(tmp_path, app_client):
     assert "Hello from page one." in data["pages"][0]["text"]
 
 
-def test_process_endpoint_returns_pages(tmp_path, app_client):
+def test_process_endpoint_returns_pages(tmp_path, app_client, docproc_main):
     """POST /process response contains required keys: status, pages, full_text, total_pages."""
     pdf_file = tmp_path / "doc.pdf"
     pdf_file.write_bytes(b"%PDF-1.4")
-
-    import main as docproc_main
 
     elem = _make_text_element("Sample content.", page_no=1)
     mock_result = _make_mock_convert_result(elem)
@@ -158,12 +152,10 @@ def test_process_unsupported_type(tmp_path, app_client):
     assert "Unsupported" in data["detail"]
 
 
-def test_process_returns_full_text(tmp_path, app_client):
+def test_process_returns_full_text(tmp_path, app_client, docproc_main):
     """POST /process full_text is the concatenation of all page texts."""
     pdf_file = tmp_path / "multi.pdf"
     pdf_file.write_bytes(b"%PDF-1.4 mock")
-
-    import main as docproc_main
 
     elem1 = _make_text_element("First page text.", page_no=1)
     elem2 = _make_text_element("Second page text.", page_no=2)
@@ -184,12 +176,10 @@ def test_process_returns_full_text(tmp_path, app_client):
     assert "Second page text." in full_text
 
 
-def test_process_returns_total_pages(tmp_path, app_client):
+def test_process_returns_total_pages(tmp_path, app_client, docproc_main):
     """POST /process total_pages matches the number of unique pages in the document."""
     pdf_file = tmp_path / "threepage.pdf"
     pdf_file.write_bytes(b"%PDF-1.4 mock")
-
-    import main as docproc_main
 
     elements = [
         _make_text_element("Page A.", page_no=1),
