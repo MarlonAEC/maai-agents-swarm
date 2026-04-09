@@ -5,10 +5,14 @@ Routes all chat messages through the Core API's CrewAI freeform agent.
 Appears as "MAAI Agent: Chat" in the Open WebUI model dropdown.
 
 File upload flow:
-  1. User uploads file in Open WebUI → Open WebUI stores it and passes metadata to pipe
-  2. Pipe downloads file from Open WebUI's file API → saves to /app/uploads (shared volume)
-  3. Pipe calls POST /ingest on Core API → ARQ job queued for docproc + Qdrant indexing
-  4. Pipe appends ingestion status to the agent response
+  Open WebUI does NOT pass file metadata to pipes (body has no "files" key).
+  Instead, it processes files with its own RAG and injects text into the message.
+
+  To trigger our Qdrant-based ingestion, the pipe:
+  1. Scans Open WebUI's uploads dir (mounted read-only at /app/webui-data/uploads/)
+  2. Finds recently uploaded files (last 60s)
+  3. Copies them to /app/uploads (shared maai-uploads volume)
+  4. Calls POST /ingest on Core API to queue ARQ job
 """
 from typing import Optional, Union, Generator, Iterator
 from pydantic import BaseModel, Field
@@ -16,7 +20,9 @@ import httpx
 import os
 import logging
 import time
-import json
+import shutil
+import glob as globmod
+import re
 
 # Logger setup (Pipelines server runs this file directly, not as a package)
 logger = logging.getLogger("maai_pipe")
@@ -25,6 +31,12 @@ if not logger.handlers:
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(asctime)s | %(name)s | %(levelname)s | %(message)s"))
     logger.addHandler(handler)
+
+# Track files we've already ingested to avoid re-processing
+_ingested_files: set[str] = set()
+
+# Supported file extensions for ingestion
+_SUPPORTED_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
 
 
 class Pipeline:
@@ -36,10 +48,6 @@ class Pipeline:
             default="http://core-api:8000",
             description="Base URL of the MAAI Core API service",
         )
-        WEBUI_URL: str = Field(
-            default="http://open-webui:8080",
-            description="Internal URL of Open WebUI (for file downloads)",
-        )
         REQUEST_TIMEOUT: float = Field(
             default=120.0,
             description="Timeout in seconds for Core API requests (agent inference can be slow on CPU)",
@@ -47,10 +55,8 @@ class Pipeline:
 
     def __init__(self):
         self.name = "MAAI Agent: "
-        self.type = "manifold"  # manifold type exposes pipelines[] as selectable models in Open WebUI
+        self.type = "manifold"
         self.valves = self.Valves()
-        # Pipelines server reads this list to register models on /models endpoint
-        # Name format: pipeline.name is prepended, so keep sub-name descriptive
         self.pipelines = [
             {"id": "chat", "name": "Chat"},
         ]
@@ -58,150 +64,107 @@ class Pipeline:
 
     async def on_startup(self):
         """Called when Pipelines server starts."""
-        logger.info(f"MAAI Agent pipeline starting, Core API URL: {self.valves.CORE_API_URL}")
+        logger.info("MAAI Agent pipeline starting, Core API URL: %s", self.valves.CORE_API_URL)
 
     async def on_shutdown(self):
         """Called when Pipelines server shuts down."""
         logger.info("MAAI Agent pipeline shutting down")
 
-    def _extract_and_save_files(self, body: dict) -> list[dict]:
-        """Extract uploaded files from the Open WebUI body and save to shared volume.
+    def _detect_ingest_intent(self, user_message: str) -> bool:
+        """Check if the user wants to index/ingest a document."""
+        ingest_keywords = [
+            "index", "ingest", "process this", "add to knowledge",
+            "store this document", "upload and index", "index this",
+        ]
+        lower = user_message.lower()
+        return any(kw in lower for kw in ingest_keywords)
 
-        Open WebUI passes file metadata in body["files"] — the actual bytes are
-        in Open WebUI's storage, accessible via its file API.
+    def _find_new_webui_files(self, max_age_seconds: int = 120) -> list[str]:
+        """Find recently uploaded files in Open WebUI's uploads directory.
 
-        Returns list of dicts: [{"original_name": str, "saved_name": str, "ok": bool, "error": str|None}]
+        Open WebUI stores files at /app/webui-data/uploads/{uuid}_{filename}.
+        Returns list of full paths to files newer than max_age_seconds.
         """
-        files_info = body.get("files", [])
-        if not files_info:
+        webui_uploads = "/app/webui-data/uploads"
+        if not os.path.isdir(webui_uploads):
+            logger.warning("Open WebUI uploads dir not found: %s", webui_uploads)
             return []
 
-        logger.info("Files detected in body: %s", json.dumps(files_info, default=str)[:500])
+        now = time.time()
+        new_files = []
+        for entry in os.listdir(webui_uploads):
+            filepath = os.path.join(webui_uploads, entry)
+            if not os.path.isfile(filepath):
+                continue
+            ext = os.path.splitext(entry)[1].lower()
+            if ext not in _SUPPORTED_EXTS:
+                continue
+            # Check if recently created
+            try:
+                mtime = os.path.getmtime(filepath)
+                if (now - mtime) < max_age_seconds and filepath not in _ingested_files:
+                    new_files.append(filepath)
+            except OSError:
+                continue
 
+        return new_files
+
+    def _copy_and_ingest(self, webui_files: list[str]) -> list[str]:
+        """Copy files from webui storage to shared volume and trigger ingestion.
+
+        Returns list of human-readable status strings.
+        """
         upload_dir = "/app/uploads"
         os.makedirs(upload_dir, exist_ok=True)
         results = []
 
-        # Supported extensions for ingestion
-        supported_exts = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
-
-        for file_entry in files_info:
-            if not isinstance(file_entry, dict):
-                logger.warning("Unexpected file entry type: %s", type(file_entry))
-                continue
-
-            # Open WebUI file format: {"type": "file", "id": "...", "filename": "...", "url": "...", ...}
-            # Some versions use "name" instead of "filename"
-            filename = file_entry.get("filename") or file_entry.get("name") or "unknown"
-            file_id = file_entry.get("id", "")
-            file_url = file_entry.get("url", "")
-
-            # Check if this is a supported file type
-            ext = os.path.splitext(filename)[1].lower()
-            if ext not in supported_exts:
-                logger.info("Skipping unsupported file type: %s (%s)", filename, ext)
-                results.append({"original_name": filename, "saved_name": "", "ok": False, "error": f"Unsupported type: {ext}"})
-                continue
-
-            saved_name = f"{int(time.time())}_{filename}"
-            filepath = os.path.join(upload_dir, saved_name)
-            file_bytes = None
-
-            # Strategy 1: Raw data in the entry (legacy/custom format)
-            raw_data = file_entry.get("data") or file_entry.get("content")
-            if raw_data:
-                try:
-                    if isinstance(raw_data, str):
-                        import base64
-                        file_bytes = base64.b64decode(raw_data)
-                    elif isinstance(raw_data, bytes):
-                        file_bytes = raw_data
-                except Exception as e:
-                    logger.warning("Failed to decode inline file data for %s: %s", filename, e)
-
-            # Strategy 2: Download from Open WebUI file API using file_id
-            if file_bytes is None and file_id:
-                try:
-                    api_url = f"{self.valves.WEBUI_URL}/api/v1/files/{file_id}/content"
-                    logger.info("Downloading file from Open WebUI: %s", api_url)
-                    with httpx.Client(timeout=60.0) as dl_client:
-                        resp = dl_client.get(api_url)
-                        if resp.status_code == 200:
-                            file_bytes = resp.content
-                            logger.info("Downloaded %d bytes for %s", len(file_bytes), filename)
-                        else:
-                            logger.warning("Open WebUI file API returned %d for %s", resp.status_code, filename)
-                except Exception as e:
-                    logger.warning("Failed to download file %s from Open WebUI: %s", filename, e)
-
-            # Strategy 3: Download from URL if provided
-            if file_bytes is None and file_url and file_url.startswith("http"):
-                try:
-                    logger.info("Downloading file from URL: %s", file_url[:200])
-                    with httpx.Client(timeout=60.0) as dl_client:
-                        resp = dl_client.get(file_url)
-                        if resp.status_code == 200:
-                            file_bytes = resp.content
-                            logger.info("Downloaded %d bytes for %s from URL", len(file_bytes), filename)
-                except Exception as e:
-                    logger.warning("Failed to download file %s from URL: %s", filename, e)
-
-            # Save to shared volume
-            if file_bytes:
-                try:
-                    with open(filepath, "wb") as f:
-                        f.write(file_bytes)
-                    logger.info("File saved: %s (%d bytes)", filepath, len(file_bytes))
-                    results.append({"original_name": filename, "saved_name": saved_name, "ok": True, "error": None})
-                except Exception as e:
-                    logger.error("Failed to save file %s: %s", filename, e)
-                    results.append({"original_name": filename, "saved_name": "", "ok": False, "error": str(e)})
-            else:
-                logger.warning(
-                    "Could not obtain file bytes for %s (id=%s, url=%s, has_data=%s)",
-                    filename, file_id, bool(file_url), bool(raw_data),
-                )
-                results.append({"original_name": filename, "saved_name": "", "ok": False, "error": "Could not obtain file content"})
-
-        return results
-
-    def _trigger_ingestion(self, saved_files: list[dict]) -> list[str]:
-        """Call /ingest on Core API for each successfully saved file.
-
-        Returns list of human-readable status strings.
-        """
-        ingest_results = []
-        for f in saved_files:
-            if not f["ok"]:
-                ingest_results.append(f"**{f['original_name']}**: Skipped — {f['error']}")
-                continue
+        for src_path in webui_files:
+            original_name = os.path.basename(src_path)
+            # Strip UUID prefix from filename (format: {uuid}_{filename})
+            # e.g., "64d11d6d-7882-459f-8083-8acbec592b2c_AI_Course.pdf" → "AI_Course.pdf"
+            parts = original_name.split("_", 1)
+            display_name = parts[1] if len(parts) > 1 else original_name
+            saved_name = f"{int(time.time())}_{display_name}"
+            dst_path = os.path.join(upload_dir, saved_name)
 
             try:
-                with httpx.Client(timeout=30.0) as ingest_client:
-                    resp = ingest_client.post(
+                shutil.copy2(src_path, dst_path)
+                logger.info("Copied %s → %s", src_path, dst_path)
+            except Exception as e:
+                logger.error("Failed to copy %s: %s", src_path, e)
+                results.append(f"**{display_name}**: Copy failed — {e}")
+                continue
+
+            # Mark as ingested to avoid re-processing
+            _ingested_files.add(src_path)
+
+            # Call /ingest
+            try:
+                with httpx.Client(timeout=30.0) as client:
+                    resp = client.post(
                         f"{self.valves.CORE_API_URL}/ingest",
-                        json={"file_name": f["saved_name"]},
+                        json={"file_name": saved_name},
                     )
                     if resp.status_code == 200:
                         data = resp.json()
                         job_id = data.get("job_id", "unknown")
-                        ingest_results.append(
-                            f"**{f['original_name']}**: Queued for processing (Job ID: `{job_id}`)"
+                        results.append(
+                            f"**{display_name}**: Queued for processing (Job ID: `{job_id}`)"
                         )
-                        logger.info("Ingest queued: %s job_id=%s", f["saved_name"], job_id)
+                        logger.info("Ingest queued: %s → job_id=%s", display_name, job_id)
                     else:
                         detail = ""
                         try:
                             detail = resp.json().get("detail", resp.text)
                         except Exception:
                             detail = resp.text
-                        ingest_results.append(f"**{f['original_name']}**: Could not queue — {detail}")
-                        logger.warning("Ingest failed for %s: %d %s", f["saved_name"], resp.status_code, detail)
+                        results.append(f"**{display_name}**: Could not queue — {detail}")
+                        logger.warning("Ingest failed: %s → %d %s", saved_name, resp.status_code, detail)
             except Exception as e:
-                ingest_results.append(f"**{f['original_name']}**: Ingestion error — {e}")
-                logger.error("Ingest error for %s: %s", f["saved_name"], e)
+                results.append(f"**{display_name}**: Ingestion error — {e}")
+                logger.error("Ingest error for %s: %s", saved_name, e)
 
-        return ingest_results
+        return results
 
     def pipe(
         self,
@@ -215,14 +178,25 @@ class Pipeline:
         for every chat message routed to this manifold.
 
         Forwards the full message history to Core API's /chat endpoint.
+        When the user requests document indexing, also scans for recently
+        uploaded files in Open WebUI's storage and triggers ingestion.
         """
         logger.info(
             "Pipe called: user_message length=%d, messages=%d, body keys=%s",
             len(user_message), len(messages), list(body.keys()),
         )
 
-        # --- Handle file uploads ---
-        saved_files = self._extract_and_save_files(body)
+        # --- Check for file ingestion intent ---
+        wants_ingest = self._detect_ingest_intent(user_message)
+        ingest_results = []
+
+        if wants_ingest:
+            new_files = self._find_new_webui_files(max_age_seconds=300)
+            if new_files:
+                logger.info("Found %d new files to ingest: %s", len(new_files), [os.path.basename(f) for f in new_files])
+                ingest_results = self._copy_and_ingest(new_files)
+            else:
+                logger.info("Ingest requested but no new files found in webui uploads")
 
         # --- Forward full message history to Core API ---
         payload = {
@@ -243,23 +217,21 @@ class Pipeline:
                 result = response.json()
 
             agent_response = result.get("response", "No response from agent.")
-            logger.info(f"Core API response received, length={len(agent_response)}")
+            logger.info("Core API response received, length=%d", len(agent_response))
 
         except httpx.TimeoutException:
             logger.error("Core API request timed out")
             agent_response = "I'm sorry, the request timed out. The model may be loading or processing a complex request. Please try again."
         except httpx.HTTPStatusError as e:
-            logger.error(f"Core API returned error: {e.response.status_code} - {e.response.text}")
+            logger.error("Core API returned error: %s - %s", e.response.status_code, e.response.text)
             agent_response = f"I encountered an error processing your request. (HTTP {e.response.status_code})"
         except Exception as e:
-            logger.error(f"Unexpected error calling Core API: {e}")
+            logger.error("Unexpected error calling Core API: %s", e)
             agent_response = "I'm sorry, I encountered an unexpected error. Please try again."
 
-        # --- Trigger document ingestion for uploaded files ---
-        if saved_files:
-            ingest_results = self._trigger_ingestion(saved_files)
-            if ingest_results:
-                agent_response += "\n\n---\n**Document Ingestion:**\n" + "\n".join(f"- {r}" for r in ingest_results)
-                agent_response += '\n\nYou can ask about your documents once processing completes, or check status by asking "what\'s the status of my document?"'
+        # --- Append ingestion results if files were processed ---
+        if ingest_results:
+            agent_response += "\n\n---\n**Document Ingestion:**\n" + "\n".join(f"- {r}" for r in ingest_results)
+            agent_response += '\n\nYou can ask about your documents once processing completes, or check status by asking "what\'s the status of my document?"'
 
         return agent_response
