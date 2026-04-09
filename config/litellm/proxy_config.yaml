@@ -4,7 +4,7 @@
 model_list:
   - model_name: reasoning-model
     litellm_params:
-      model: ollama_chat/qwen3:14b
+      model: ollama_chat/qwen2.5:14b
       api_base: http://ollama:11434
       api_key: none
   - model_name: classifier-model

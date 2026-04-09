@@ -105,10 +105,10 @@ log_info "Detected profile: ${PROFILE}"
 
 # ── Step 5: CPU model downgrade ───────────────────────────────────────────────
 if [[ "${PROFILE}" == "cpu" ]]; then
-  REASONING_MODEL="qwen3:7b"
+  REASONING_MODEL="qwen2.5:7b"
   CLASSIFIER_MODEL="gemma3:1b"
   # EMBEDDING_MODEL stays as-is
-  log_info "CPU profile: using smaller models (qwen3:7b, gemma3:1b)"
+  log_info "CPU profile: using smaller models (qwen2.5:7b, gemma3:1b)"
 fi
 
 # Export models so they're available for later steps
