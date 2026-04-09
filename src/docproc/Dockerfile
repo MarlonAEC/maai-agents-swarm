@@ -7,6 +7,10 @@ WORKDIR /app
 # libglib2.0-0 is needed for some image processing operations by opencv-python-headless
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
+    libxcb1 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for fast dependency installation (per CLAUDE.md: use uv, not pip)
