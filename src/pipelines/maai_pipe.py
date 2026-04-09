@@ -70,7 +70,8 @@ class Pipeline:
 
         # --- Handle file uploads ---
         files_info = body.get("files", [])
-        file_acknowledgments = []
+        file_acknowledgments = []  # Original filenames for display
+        saved_filenames = []       # Timestamped filenames for /ingest calls
         if files_info:
             upload_dir = "/app/uploads"
             os.makedirs(upload_dir, exist_ok=True)
@@ -80,7 +81,8 @@ class Pipeline:
                     filename = file_entry.get("filename", file_entry.get("name", "unknown"))
                     file_data = file_entry.get("data", file_entry.get("content"))
                     if file_data and filename != "unknown":
-                        filepath = os.path.join(upload_dir, f"{int(time.time())}_{filename}")
+                        saved_name = f"{int(time.time())}_{filename}"
+                        filepath = os.path.join(upload_dir, saved_name)
                         try:
                             if isinstance(file_data, str):
                                 import base64
@@ -90,6 +92,7 @@ class Pipeline:
                                 with open(filepath, "wb") as f:
                                     f.write(file_data)
                             logger.info(f"File saved: {filepath}")
+                            saved_filenames.append(saved_name)
                         except Exception as e:
                             logger.error(f"Failed to save file {filename}: {e}")
                 file_acknowledgments.append(filename)
@@ -125,9 +128,32 @@ class Pipeline:
             logger.error(f"Unexpected error calling Core API: {e}")
             agent_response = "I'm sorry, I encountered an unexpected error. Please try again."
 
-        # --- Append file acknowledgment if files were uploaded ---
+        # --- Trigger document ingestion for uploaded files ---
         if file_acknowledgments:
-            file_list = ", ".join(file_acknowledgments)
-            agent_response += f"\n\n---\n**File received:** {file_list}. Document processing will be available in a future update."
+            ingest_results = []
+            for saved_name in saved_filenames:
+                try:
+                    with httpx.Client(timeout=30.0) as ingest_client:
+                        resp = ingest_client.post(
+                            f"{self.valves.CORE_API_URL}/ingest",
+                            json={"file_name": saved_name},
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            ingest_results.append(
+                                f"**{saved_name}**: Queued for processing (Job ID: `{data.get('job_id', 'unknown')}`)"
+                            )
+                            logger.info(f"Ingest queued: {saved_name} job_id={data.get('job_id')}")
+                        else:
+                            detail = resp.json().get("detail", resp.text) if resp.headers.get("content-type", "").startswith("application/json") else resp.text
+                            ingest_results.append(f"**{saved_name}**: Could not queue — {detail}")
+                            logger.warning(f"Ingest failed for {saved_name}: {resp.status_code} {detail}")
+                except Exception as e:
+                    ingest_results.append(f"**{saved_name}**: Ingestion error — {e}")
+                    logger.error(f"Ingest error for {saved_name}: {e}")
+
+            if ingest_results:
+                agent_response += "\n\n---\n**Document Ingestion:**\n" + "\n".join(f"- {r}" for r in ingest_results)
+                agent_response += "\n\nYou can ask about your documents once processing completes, or check status by asking \"what's the status of my document?\""
 
         return agent_response

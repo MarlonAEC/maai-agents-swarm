@@ -20,8 +20,8 @@ result: [pending]
 expected: Agent responds with awareness of prior turn when sent a follow-up message
 result: [pending]
 
-### 3. File Upload Acknowledgment (CHAT-03)
-expected: Response includes "File received: {filename}. Document processing will be available in a future update."
+### 3. File Upload + Ingestion (CHAT-03, DOCP-06)
+expected: File is saved to /app/uploads and automatically queued for ingestion via POST /ingest. Response includes "Document Ingestion:" section with job ID.
 result: [pending]
 
 ## Summary
